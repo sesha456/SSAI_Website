@@ -244,8 +244,38 @@
     transform: translateX(calc(-100% - 2rem));
   }
 
+  .nav.collapsed {
+    width: min(18rem, calc(100vw - 2rem));
+  }
+
   .nav.mobile-open {
     transform: translateX(0);
+  }
+
+  .collapsed .brand__text,
+  .collapsed .nav__links span,
+  .collapsed .icon-btn span,
+  .collapsed .officer-btn span,
+  .collapsed .officer-badge small,
+  .collapsed .officer-badge span,
+  .collapsed .officer-badge strong {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+
+  .collapsed .nav__links a,
+  .collapsed .icon-btn,
+  .collapsed .officer-btn {
+    justify-content: flex-start;
+    padding-inline: 0.75rem;
+  }
+
+  .collapsed .officer-badge {
+    place-items: start;
+    padding: 0.8rem;
   }
 
   .dialog-actions {

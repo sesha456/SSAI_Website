@@ -55,7 +55,7 @@ import { OfficerSessionService } from '../../../core/services/officer-session.se
           <mat-icon>{{ theme.isLight() ? 'dark_mode' : 'light_mode' }}</mat-icon>
           <span>{{ theme.isLight() ? 'Dark' : 'Light' }}</span>
         </button>
-        <button class="icon-btn" type="button" (click)="toggleCollapsed()" [attr.aria-label]="collapsed() ? 'Open sidebar' : 'Close sidebar'">
+        <button class="icon-btn" type="button" (click)="toggleSidebarControl()" [attr.aria-label]="collapsed() ? 'Open sidebar' : 'Close sidebar'">
           <mat-icon>{{ collapsed() ? 'keyboard_double_arrow_right' : 'keyboard_double_arrow_left' }}</mat-icon>
           <span>{{ collapsed() ? 'Open' : 'Close' }}</span>
         </button>
@@ -154,6 +154,15 @@ export class NavbarComponent {
   toggleCollapsed(): void {
     this.collapsed.update((value) => !value);
     this.collapsedChange.emit(this.collapsed());
+  }
+
+  toggleSidebarControl(): void {
+    if (this.mobileOpen()) {
+      this.closeMobile();
+      return;
+    }
+
+    this.toggleCollapsed();
   }
 
   toggleMobile(): void {

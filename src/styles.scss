@@ -37,6 +37,12 @@ body.light {
   box-sizing: border-box;
 }
 
+*,
+*::before,
+*::after {
+  min-width: 0;
+}
+
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
@@ -45,6 +51,7 @@ html {
 body {
   margin: 0;
   min-width: 320px;
+  width: 100%;
   overflow-x: hidden;
   background:
     radial-gradient(circle at 15% 10%, rgba(69, 240, 209, 0.2), transparent 32rem),
@@ -362,7 +369,15 @@ button,
 input,
 textarea,
 select {
+  max-width: 100%;
   font: inherit;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
 }
 
 .section {
@@ -466,6 +481,7 @@ select {
 
 .mat-mdc-form-field {
   width: 100%;
+  max-width: 100%;
 }
 
 .reveal {
