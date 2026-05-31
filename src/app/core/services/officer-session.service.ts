@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { EmailService } from './email.service';
 
 export type OfficerRole = 'Super Admin' | 'President' | 'Vice President' | 'Event Coordinator' | 'Technical Lead' | 'Research Lead' | 'Marketing Lead' | 'Secretary' | 'Treasurer';
 
@@ -30,6 +31,7 @@ interface PendingOtp {
 @Injectable({ providedIn: 'root' })
 export class OfficerSessionService {
   private readonly router = inject(Router);
+  private readonly email = inject(EmailService);
   private readonly storageKey = 'officerSession';
   private readonly otpKey = 'officerPendingOtp';
   private readonly registryKey = 'ssai-officer-registry';
@@ -91,9 +93,16 @@ export class OfficerSessionService {
     };
     sessionStorage.setItem(this.otpKey, JSON.stringify(pending));
 
-    // Static Angular cannot securely deliver email. In production this call should be
-    // replaced by a backend endpoint that sends the OTP and never returns it.
-    this.dispatchOtpEmail(officer.email, otp);
+    try {
+      await this.email.sendOfficerVerificationCode({ email: officer.email, code: otp });
+    } catch (error) {
+      sessionStorage.removeItem(this.otpKey);
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : 'Unable to send verification code. Please try again later.'
+      };
+    }
+
     return { ok: true, message: 'Verification code sent to the registered officer email.' };
   }
 
@@ -253,21 +262,4 @@ export class OfficerSessionService {
     return Array.from(new Uint8Array(hash)).map((value) => value.toString(16).padStart(2, '0')).join('');
   }
 
-  private dispatchOtpEmail(email: string, otp: string): void {
-    const subject = 'SSAI Officer Verification Code';
-    const body = [
-      'Hello Officer,',
-      '',
-      'Your verification code is:',
-      '',
-      otp,
-      '',
-      'This code expires in 5 minutes.',
-      '',
-      'If you did not request access, please ignore this email.',
-      '',
-      'Society for Student AI Innovation (SSAI)'
-    ].join('\n');
-    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }
 }
