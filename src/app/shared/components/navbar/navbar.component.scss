@@ -1,0 +1,254 @@
+.nav {
+  position: fixed;
+  top: 1rem;
+  bottom: 1rem;
+  left: 1rem;
+  z-index: 40;
+  display: grid;
+  width: 18rem;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  padding: 0.8rem;
+  border-radius: 1rem;
+  transition: width 220ms ease, transform 220ms ease, border-color 220ms ease;
+}
+
+.brand,
+.nav__links,
+.nav__actions,
+.icon-btn,
+.officer-btn {
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  gap: 0.7rem;
+  min-height: 3rem;
+  padding: 0.2rem;
+  font-family: Poppins, Inter, sans-serif;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.brand__mark {
+  display: grid;
+  width: 2.8rem;
+  height: 2.8rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #03111d;
+}
+
+.nav__links {
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.2rem;
+  scrollbar-width: thin;
+}
+
+.nav__links a {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.8rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.nav__links a:hover,
+.nav__links a.active {
+  background: rgba(255,255,255,.1);
+  color: var(--text);
+}
+
+.nav__links a.active {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.nav__links mat-icon,
+.icon-btn mat-icon,
+.officer-btn mat-icon {
+  flex: 0 0 auto;
+  width: 1.15rem;
+  height: 1.15rem;
+  font-size: 1.15rem;
+}
+
+.nav__actions {
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.45rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.2rem;
+  scrollbar-width: thin;
+}
+
+.icon-btn,
+.officer-btn {
+  width: 100%;
+  min-height: 2.75rem;
+  gap: 0.65rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: rgba(255,255,255,.06);
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.officer-btn {
+  border-color: color-mix(in srgb, var(--primary), transparent 28%);
+  color: var(--primary);
+}
+
+.officer-badge {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--primary), transparent 45%);
+  border-radius: 0.9rem;
+  background: rgba(69,240,209,.08);
+}
+
+.officer-badge mat-icon,
+.officer-badge span {
+  color: var(--primary);
+}
+
+.officer-badge span,
+.officer-badge strong {
+  font-weight: 900;
+}
+
+.officer-badge small,
+.officer-badge strong {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.collapsed {
+  width: 4.8rem;
+}
+
+.collapsed .brand__text,
+.collapsed .nav__links span,
+.collapsed .icon-btn span,
+.collapsed .officer-btn span,
+.collapsed .officer-badge small,
+.collapsed .officer-badge span,
+.collapsed .officer-badge strong {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.collapsed .nav__links a,
+.collapsed .icon-btn,
+.collapsed .officer-btn {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.collapsed .officer-badge {
+  place-items: center;
+  padding: 0.65rem 0;
+}
+
+.mobile-toggle {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 50;
+  display: none;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 0.85rem;
+  color: var(--text);
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  border: 0;
+  background: rgba(0,0,0,.55);
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  padding: 1rem;
+  background: rgba(0,0,0,.68);
+  place-items: center;
+}
+
+.dialog {
+  display: grid;
+  width: min(430px, 100%);
+  gap: 0.9rem;
+  padding: 1.25rem;
+  border-radius: 1rem;
+}
+
+.dialog h2,
+.dialog p {
+  margin: 0;
+}
+
+.dialog p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.dialog-message {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.dialog-message.error {
+  color: #ff7a90;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+@media (max-width: 920px) {
+  .mobile-toggle {
+    display: grid;
+  }
+
+  .nav {
+    width: min(18rem, calc(100vw - 2rem));
+    transform: translateX(calc(-100% - 2rem));
+  }
+
+  .nav.mobile-open {
+    transform: translateX(0);
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+}

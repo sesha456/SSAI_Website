@@ -1,0 +1,26 @@
+.form {
+  display: grid;
+  gap: 0.8rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border-radius: 1rem;
+}
+
+.upload {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.9rem;
+  color: var(--muted);
+}
+
+.upload span {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.success {
+  margin: 0;
+  color: var(--primary);
+  font-weight: 800;
+}

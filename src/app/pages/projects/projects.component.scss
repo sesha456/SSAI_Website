@@ -1,0 +1,189 @@
+.page {
+  padding-top: clamp(5rem, 10vw, 8rem);
+}
+
+.toolbar {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
+}
+
+.filters,
+.stack,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.filters button {
+  cursor: pointer;
+}
+
+.active {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #04111d;
+}
+
+.top-gap {
+  margin-top: 1.5rem;
+}
+
+.admin-bar {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.admin-bar span {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.edit-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0.45rem 0.75rem;
+}
+
+.edit-heading mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.managed-card {
+  position: relative;
+}
+
+.manage-actions {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.manage-actions button {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: var(--surface-strong);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  padding: 1rem;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.72);
+  place-items: center;
+}
+
+.modal__content {
+  position: relative;
+  width: min(760px, 100%);
+  padding: clamp(1.2rem, 4vw, 2rem);
+  border-radius: 1rem;
+}
+
+.editor {
+  display: grid;
+  width: min(720px, 100%);
+  gap: 0.8rem;
+  padding: 1.2rem;
+  border-radius: 1rem;
+}
+
+.editor h2 {
+  margin: 0;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: flex-end;
+}
+
+.modal__content p {
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.stack span {
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.6rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.actions {
+  margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+  .filters .pill,
+  .actions a,
+  .actions button,
+  .admin-bar button,
+  .editor-actions button {
+    width: 100%;
+  }
+
+  .editor-actions {
+    flex-direction: column-reverse;
+  }
+
+  .close {
+    position: static;
+    margin-left: auto;
+    margin-bottom: 0.75rem;
+  }
+}

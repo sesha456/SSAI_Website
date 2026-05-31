@@ -1,0 +1,36 @@
+.highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1rem;
+}
+
+.highlight {
+  padding: 1.1rem;
+  border-radius: 1rem;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.highlight:hover {
+  transform: translateY(-5px);
+  border-color: color-mix(in srgb, var(--primary), transparent 35%);
+}
+
+.icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #04111d;
+}
+
+h3 {
+  margin: 1rem 0 0.55rem;
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}

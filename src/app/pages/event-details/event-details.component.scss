@@ -1,0 +1,261 @@
+.detail-hero {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  padding-top: clamp(5rem, 10vw, 8rem);
+}
+
+.hero-video,
+.hero-video__shade {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-video__shade {
+  background:
+    radial-gradient(circle at 75% 20%, rgba(69, 240, 209, 0.18), transparent 30rem),
+    linear-gradient(90deg, rgba(6, 17, 31, 0.92), rgba(6, 17, 31, 0.72) 45%, rgba(6, 17, 31, 0.42));
+  backdrop-filter: saturate(1.1);
+}
+
+.sound-prompt {
+  position: absolute;
+  right: clamp(1rem, 4vw, 3rem);
+  bottom: clamp(1rem, 4vw, 3rem);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.detail-hero__grid,
+.about-grid,
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+.detail-hero__grid {
+  position: relative;
+  z-index: 2;
+}
+
+h1 {
+  margin: 0;
+  font-family: Montserrat, Inter, sans-serif;
+  font-size: clamp(2rem, 4.8vw, 3.4rem);
+  line-height: 1.06;
+}
+
+.detail-hero p {
+  color: var(--primary);
+  font-size: clamp(1.1rem, 3vw, 1.5rem);
+  font-weight: 900;
+}
+
+.banner {
+  position: relative;
+  display: grid;
+  min-height: clamp(20rem, 44vw, 34rem);
+  overflow: hidden;
+  padding: 1.2rem;
+  border-radius: 1.2rem;
+  place-items: end start;
+}
+
+.banner::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(255,255,255,.2) 50%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(255,255,255,.16) 50%, transparent 51%);
+  background-size: 3.5rem 3.5rem;
+  mask-image: radial-gradient(circle, black, transparent 75%);
+}
+
+.banner span {
+  position: relative;
+  z-index: 1;
+  max-width: 20rem;
+  color: #04111d;
+  font-size: clamp(1.4rem, 4vw, 2.5rem);
+  font-weight: 900;
+}
+
+.banner.video-card {
+  align-content: end;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.banner.video-card mat-icon {
+  position: relative;
+  z-index: 1;
+  width: 3rem;
+  height: 3rem;
+  color: var(--primary);
+  font-size: 3rem;
+}
+
+.banner.video-card span {
+  color: var(--text);
+}
+
+.badges,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.4rem;
+}
+
+.badges span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--muted);
+  font-weight: 800;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.organizers {
+  color: var(--text);
+  font-weight: 900;
+  line-height: 1.7;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem;
+}
+
+.stats div {
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.stats strong {
+  display: block;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+}
+
+.stats span,
+.timeline span,
+.video span {
+  color: var(--muted);
+}
+
+.band {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.top-gap {
+  margin-top: 1.5rem;
+}
+
+.speaker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.timeline {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.timeline article {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+}
+
+.timeline strong {
+  color: var(--primary);
+}
+
+.video {
+  display: grid;
+  gap: 0.45rem;
+  min-height: 12rem;
+  margin: 1.5rem 0;
+  padding: 1.2rem;
+  border-radius: 1rem;
+  place-items: center;
+  text-align: center;
+}
+
+.video mat-icon {
+  color: var(--primary);
+  font-size: 3rem;
+  width: 3rem;
+  height: 3rem;
+}
+
+.missing {
+  padding: 2rem;
+  border-radius: 1rem;
+}
+
+@media (max-width: 900px) {
+  .detail-hero__grid,
+  .about-grid,
+  .schedule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats,
+  .timeline article {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .detail-hero {
+    min-height: auto;
+  }
+
+  .banner {
+    min-height: 16rem;
+  }
+
+  .sound-prompt {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    z-index: 3;
+    width: calc(100% - 2rem);
+    margin: 1rem;
+    justify-content: center;
+  }
+
+  .badges span,
+  .actions a {
+    width: 100%;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}

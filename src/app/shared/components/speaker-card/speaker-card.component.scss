@@ -1,0 +1,65 @@
+.speaker {
+  position: relative;
+  min-height: 100%;
+  padding: 1.2rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  text-align: center;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.speaker::before {
+  position: absolute;
+  inset: -50% -20% auto;
+  height: 9rem;
+  content: '';
+  background: linear-gradient(135deg, rgba(69,240,209,.38), rgba(139,92,246,.36));
+  filter: blur(22px);
+}
+
+.speaker:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--accent), transparent 32%);
+}
+
+.avatar {
+  position: relative;
+  display: grid;
+  width: 5.2rem;
+  height: 5.2rem;
+  margin: 0 auto 1rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .45);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #04111d;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+p {
+  margin: 0.55rem 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+strong {
+  display: block;
+  color: var(--text);
+}
+
+a {
+  display: grid;
+  width: 2.55rem;
+  height: 2.55rem;
+  margin: 1rem auto 0;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  color: var(--primary);
+}

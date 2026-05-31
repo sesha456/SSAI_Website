@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "title": "Applied AI Research Night",
+    "category": "Research",
+    "date": "2026-06-12",
+    "time": "5:30 PM",
+    "venue": "Innovation Hall Auditorium",
+    "description": "Lightning talks from student research teams working on healthcare AI, RAG systems, and multi-agent workflows.",
+    "image": "linear-gradient(135deg, #45f0d1, #2563eb)"
+  },
+  {
+    "id": 2,
+    "title": "Generative AI Build Workshop",
+    "category": "Workshop",
+    "date": "2026-06-20",
+    "time": "2:00 PM",
+    "venue": "AI Lab 204",
+    "description": "Hands-on session covering prompt design, retrieval pipelines, evaluation, and responsible deployment.",
+    "image": "linear-gradient(135deg, #8b5cf6, #38bdf8)"
+  }
+]

@@ -1,0 +1,29 @@
+.page {
+  padding-top: clamp(5rem, 10vw, 8rem);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .benefits .pill {
+    width: 100%;
+  }
+}

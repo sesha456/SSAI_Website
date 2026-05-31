@@ -1,0 +1,138 @@
+.page {
+  padding-top: clamp(5rem, 10vw, 8rem);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+
+.filters button {
+  cursor: pointer;
+}
+
+.filters .active {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #04111d;
+}
+
+.top-gap {
+  margin-top: 1.5rem;
+}
+
+.admin-bar {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+}
+
+.admin-bar span {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.managed-card {
+  position: relative;
+}
+
+.manage-actions {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.manage-actions button {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: var(--surface-strong);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: grid;
+  padding: 1rem;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.72);
+  place-items: center;
+}
+
+.editor {
+  display: grid;
+  width: min(720px, 100%);
+  gap: 0.8rem;
+  padding: 1.2rem;
+  border-radius: 1rem;
+}
+
+.editor h2 {
+  margin: 0;
+}
+
+.edit-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-strong);
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 900;
+  padding: 0.45rem 0.75rem;
+}
+
+.edit-heading mat-icon {
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+}
+
+.upload-box {
+  display: grid;
+  min-height: 5rem;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 0.9rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+}
+
+.upload-box input {
+  display: none;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.7rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .admin-bar button,
+  .editor-actions button {
+    width: 100%;
+  }
+
+  .editor-actions {
+    flex-direction: column-reverse;
+  }
+}

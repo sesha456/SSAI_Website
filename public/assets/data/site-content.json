@@ -1,0 +1,71 @@
+{
+  "aboutHero": {
+    "eyebrow": "About SSAI",
+    "title": "An academic AI society for curious builders, researchers, and future leaders.",
+    "copy": "SSAI was founded to give students a professional environment for exploring artificial intelligence beyond the classroom through research, technical projects, events, and interdisciplinary collaboration."
+  },
+  "aboutCards": [
+    {
+      "title": "Vision",
+      "copy": "To become a recognized university hub where students shape trustworthy, useful, and creative AI systems."
+    },
+    {
+      "title": "Mission",
+      "copy": "To empower students through AI education, research mentorship, applied projects, and professional exposure."
+    },
+    {
+      "title": "Objectives",
+      "copy": "Host technical programs, support research groups, connect students with mentors, and showcase student innovation."
+    },
+    {
+      "title": "What SSAI Does",
+      "copy": "SSAI runs workshops, hackathons, speaker sessions, project sprints, research meetups, and interdisciplinary collaborations."
+    }
+  ],
+  "aboutFocus": {
+    "eyebrow": "Focus Areas",
+    "title": "From core AI foundations to emerging applied research.",
+    "areas": ["Artificial Intelligence", "Machine Learning", "Healthcare AI", "Robotics", "NLP", "Computer Vision", "Generative AI", "AI Research"]
+  },
+  "aboutTimeline": {
+    "eyebrow": "Milestones",
+    "title": "A timeline designed for scale.",
+    "items": [
+      {
+        "year": "2024",
+        "title": "Founding Chapter",
+        "copy": "Student founders organize the first AI learning circles and project teams."
+      },
+      {
+        "year": "2025",
+        "title": "Research Tracks",
+        "copy": "Healthcare AI, RAG systems, robotics, and vision groups launch with faculty guidance."
+      },
+      {
+        "year": "2026",
+        "title": "Industry Portal",
+        "copy": "SSAI expands public programming, partnerships, and project showcases for external collaborators."
+      }
+    ]
+  },
+  "eventsHero": {
+    "eyebrow": "Events",
+    "title": "Workshops, hackathons, conferences, meetups, and speaker sessions.",
+    "copy": "Filter upcoming SSAI programming by format and find the next event that matches your goals."
+  },
+  "pastEventsHero": {
+    "eyebrow": "Past Events",
+    "title": "Conference recaps and signature SSAI programs.",
+    "copy": "Explore previous SSAI events, speakers, highlights, student showcases, and networking activities."
+  },
+  "projectsHero": {
+    "eyebrow": "Projects & Research",
+    "title": "AI project showcases across health, language, agents, robotics, and discovery.",
+    "copy": "Search by title, domain, technology, or contributor, then open a project for deeper details."
+  },
+  "leadershipHero": {
+    "eyebrow": "Leadership Team",
+    "title": "Faculty mentors, current officers, and SSAI leadership alumni.",
+    "copy": "The SSAI leadership team coordinates programs, guides research teams, builds technical infrastructure, and keeps the community connected."
+  }
+}

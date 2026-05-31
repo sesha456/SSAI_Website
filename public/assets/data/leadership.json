@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Dr. Mira Collins",
+    "role": "Faculty Mentor",
+    "group": "Faculty Mentors",
+    "bio": "Supports ethical AI research, grant alignment, and academic mentorship.",
+    "image": "MC",
+    "linkedin": "https://linkedin.com/",
+    "github": "",
+    "type": "faculty",
+    "department": "Computer Science and Engineering",
+    "website": "https://example.com/"
+  },
+  {
+    "name": "Aarav Mehta",
+    "role": "President",
+    "group": "President",
+    "bio": "Leads SSAI strategy, partnerships, and cross-disciplinary AI initiatives.",
+    "image": "AM",
+    "linkedin": "https://linkedin.com/",
+    "github": "https://github.com/",
+    "type": "officer",
+    "isCurrent": true,
+    "yearsServed": "2025 - Present"
+  },
+  {
+    "name": "Sophia Nguyen",
+    "role": "Vice President",
+    "group": "Vice President",
+    "bio": "Coordinates organization operations, chapter programs, and member success.",
+    "image": "SN",
+    "linkedin": "https://linkedin.com/",
+    "github": "https://github.com/",
+    "type": "officer",
+    "isCurrent": true,
+    "yearsServed": "2025 - Present"
+  },
+  {
+    "name": "Marcus Reed",
+    "role": "Event Coordinator",
+    "group": "Event Coordinators",
+    "bio": "Designs workshops, speaker sessions, and conference-style experiences.",
+    "image": "MR",
+    "linkedin": "https://linkedin.com/",
+    "github": "https://github.com/",
+    "type": "officer",
+    "isCurrent": true,
+    "yearsServed": "2025 - Present"
+  },
+  {
+    "name": "Leah Ortiz",
+    "role": "Technical Lead",
+    "group": "Technical Leads",
+    "bio": "Mentors project teams in software architecture, MLOps, and deployment.",
+    "image": "LO",
+    "linkedin": "https://linkedin.com/",
+    "github": "https://github.com/",
+    "type": "officer",
+    "isCurrent": false,
+    "yearsServed": "2024 - 2025"
+  },
+  {
+    "name": "Dev Shah",
+    "role": "Research Lead",
+    "group": "Research Leads",
+    "bio": "Guides literature review, reproducible experiments, and publication readiness.",
+    "image": "DS",
+    "linkedin": "https://linkedin.com/",
+    "github": "https://github.com/",
+    "type": "officer",
+    "isCurrent": false,
+    "yearsServed": "2024 - 2025"
+  }
+]

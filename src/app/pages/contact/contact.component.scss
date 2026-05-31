@@ -1,0 +1,68 @@
+.page {
+  padding-top: clamp(5rem, 10vw, 8rem);
+}
+
+.layout,
+.grid-two {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.contact-cards {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.contact-cards a {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  color: var(--muted);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.band {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.map {
+  width: 100%;
+  min-height: 24rem;
+  border: 0;
+  border-radius: 1rem;
+}
+
+details {
+  padding: 1rem;
+  border-radius: 0.9rem;
+  margin-bottom: 0.8rem;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 900;
+}
+
+details p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+@media (max-width: 860px) {
+  .layout,
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .map {
+    min-height: 18rem;
+  }
+}

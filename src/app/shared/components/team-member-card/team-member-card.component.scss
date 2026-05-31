@@ -1,0 +1,66 @@
+.team {
+  padding: 1.2rem;
+  border-radius: 1rem;
+  text-align: center;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.team:hover {
+  transform: translateY(-6px);
+  border-color: color-mix(in srgb, var(--primary), transparent 30%);
+}
+
+.avatar {
+  overflow: hidden;
+  display: grid;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: 0 auto 1rem;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #04111d;
+  font-size: 1.5rem;
+  font-weight: 900;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+h3 {
+  margin: 0.9rem 0 0.25rem;
+}
+
+strong,
+small,
+p {
+  color: var(--muted);
+}
+
+small {
+  display: block;
+  margin-top: 0.35rem;
+  font-weight: 800;
+}
+
+p {
+  line-height: 1.6;
+}
+
+.links {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.links a {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+}

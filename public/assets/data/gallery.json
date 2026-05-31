@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "title": "AI Horizons 2026",
+    "eventDate": "2026-04-25",
+    "coverImage": "linear-gradient(135deg, #45f0d1, #2563eb)",
+    "description": "Conference photos, research showcases, and networking moments from AI Horizons 2026.",
+    "photos": [
+      {
+        "title": "Conference Stage",
+        "image": "linear-gradient(135deg, #45f0d1, #1d4ed8)"
+      },
+      {
+        "title": "Poster Competition",
+        "image": "linear-gradient(135deg, #f8d36b, #ef476f)"
+      },
+      {
+        "title": "Networking Session",
+        "image": "linear-gradient(135deg, #8b5cf6, #14b8a6)"
+      }
+    ]
+  }
+]

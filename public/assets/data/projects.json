@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "Clinical Triage Assistant",
+    "domain": "Healthcare AI",
+    "category": "Healthcare AI",
+    "techStack": ["Python", "Angular", "TensorFlow", "FHIR"],
+    "description": "A decision-support prototype for summarizing patient intake signals and routing cases responsibly.",
+    "details": "The project explores explainable triage recommendations, structured clinical data handling, and human-in-the-loop review for safer care workflows.",
+    "contributors": ["Aisha Patel", "Noah Chen", "Maya Rivera"],
+    "github": "https://github.com/",
+    "demo": "https://example.com/"
+  },
+  {
+    "id": 2,
+    "title": "Research Paper RAG Navigator",
+    "domain": "RAG Systems",
+    "category": "RAG Systems",
+    "techStack": ["LangChain", "TypeScript", "Vector DB", "OpenAI API"],
+    "description": "A retrieval system that helps students explore literature, citations, and experiment notes.",
+    "details": "Includes citation-aware chunking, source-grounded answers, evaluation rubrics, and a clean interface for research groups.",
+    "contributors": ["Elena Brooks", "Sam Wilson"],
+    "github": "https://github.com/",
+    "demo": "https://example.com/"
+  }
+]

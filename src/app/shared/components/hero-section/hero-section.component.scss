@@ -1,0 +1,120 @@
+.hero {
+  position: relative;
+  display: grid;
+  min-height: calc(100svh - 5rem);
+  overflow: hidden;
+  padding: clamp(5rem, 10vw, 8rem) clamp(1rem, 4vw, 3rem) 3rem;
+  place-items: center;
+}
+
+.hero::before {
+  position: absolute;
+  inset: 8% 8% auto;
+  height: 65%;
+  content: '';
+  background:
+    linear-gradient(90deg, transparent 49%, rgba(69, 240, 209, 0.16) 50%, transparent 51%),
+    linear-gradient(0deg, transparent 49%, rgba(56, 189, 248, 0.12) 50%, transparent 51%);
+  background-size: 5rem 5rem;
+  mask-image: radial-gradient(circle, black, transparent 70%);
+  animation: drift 16s linear infinite;
+}
+
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  width: min(1050px, 100%);
+  text-align: center;
+}
+
+h1 {
+  margin: 0 auto;
+  max-width: 100%;
+  font-family: Montserrat, Inter, sans-serif;
+  font-size: clamp(2.35rem, 4.8vw, 3.05rem);
+  line-height: 1.04;
+}
+
+p {
+  margin: 1.25rem auto 0;
+  max-width: 760px;
+  color: var(--muted);
+  font-size: clamp(1.15rem, 3vw, 1.55rem);
+  line-height: 1.7;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+
+.hero__panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(820px, 100%);
+  margin-top: 3rem;
+  border-radius: 1rem;
+}
+
+.hero__panel div {
+  padding: 1.1rem;
+  text-align: center;
+}
+
+.hero__panel strong {
+  display: block;
+  font-size: clamp(1.6rem, 5vw, 2.6rem);
+}
+
+.hero__panel span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.particles span {
+  position: absolute;
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 50%;
+  background: var(--primary);
+  opacity: 0.42;
+  animation: float calc(6s + var(--i) * .2s) ease-in-out infinite alternate;
+}
+
+@keyframes float {
+  to { transform: translate3d(1.5rem, -2rem, 0) scale(1.7); opacity: 0.85; }
+}
+
+@keyframes drift {
+  to { transform: translate3d(-5rem, 5rem, 0); }
+}
+
+@media (max-width: 640px) {
+  h1 {
+    white-space: normal;
+  }
+
+  .hero__actions a {
+    width: 100%;
+  }
+
+  .hero__panel {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    min-height: auto;
+    padding-top: 5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  h1 {
+    white-space: nowrap;
+  }
+}
