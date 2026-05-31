@@ -28,6 +28,13 @@ interface PendingOtp {
   resendAttempts: number;
 }
 
+interface OfficerSheetRow {
+  Name?: string;
+  Email?: string;
+  Position?: string;
+  Active?: boolean | string | number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OfficerSessionService {
   private readonly router = inject(Router);
@@ -72,7 +79,7 @@ export class OfficerSessionService {
   }
 
   async sendOtp(email: string, resend = false): Promise<{ ok: true; message: string } | { ok: false; message: string }> {
-    const officer = this.findOfficer(email);
+    const officer = await this.findOfficerFromExcel(email);
     if (!officer) {
       return { ok: false, message: 'This email is not registered as an active SSAI officer.' };
     }
@@ -107,7 +114,7 @@ export class OfficerSessionService {
   }
 
   async verifyOtp(email: string, otp: string): Promise<{ ok: true; session: OfficerSession } | { ok: false; message: string }> {
-    const officer = this.findOfficer(email);
+    const officer = await this.findOfficerFromExcel(email);
     const pending = this.readPendingOtp();
     if (!officer || !pending || pending.email !== officer.email.toLowerCase()) {
       return { ok: false, message: 'Please request a new verification code.' };
@@ -194,6 +201,45 @@ export class OfficerSessionService {
   private findOfficer(email: string): OfficerRegistryEntry | null {
     const normalizedEmail = email.trim().toLowerCase();
     return this.officers().find((officer) => officer.active && officer.email.toLowerCase() === normalizedEmail) ?? null;
+  }
+
+  private async findOfficerFromExcel(email: string): Promise<OfficerRegistryEntry | null> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const rows = await this.readOfficerSheet();
+    const row = rows.find((item) => String(item.Email ?? '').trim().toLowerCase() === normalizedEmail);
+    if (!row || !this.isActive(row.Active)) {
+      return null;
+    }
+    return {
+      name: String(row.Name ?? 'SSAI Officer').trim(),
+      email: String(row.Email ?? email).trim(),
+      role: this.normalizeRole(String(row.Position ?? 'President')),
+      active: true
+    };
+  }
+
+  private async readOfficerSheet(): Promise<OfficerSheetRow[]> {
+    const XLSX = await import('xlsx');
+    const response = await fetch('/assets/data/officers.xlsx', { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('Unable to load officer registry.');
+    }
+    const buffer = await response.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    return XLSX.utils.sheet_to_json<OfficerSheetRow>(worksheet);
+  }
+
+  private isActive(value: boolean | string | number | undefined): boolean {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    return ['true', 'yes', '1', 'active'].includes(String(value ?? '').trim().toLowerCase());
+  }
+
+  private normalizeRole(value: string): OfficerRole {
+    const roles: OfficerRole[] = ['Super Admin', 'President', 'Vice President', 'Event Coordinator', 'Technical Lead', 'Research Lead', 'Marketing Lead', 'Secretary', 'Treasurer'];
+    return roles.find((role) => role.toLowerCase() === value.trim().toLowerCase()) ?? 'President';
   }
 
   private readRegistry(): OfficerRegistryEntry[] {
