@@ -3,10 +3,10 @@ export const environment = {
   organizationEmail: 'contact@ssai.org',
   googleMapEmbedUrl: 'https://www.google.com/maps?q=university%20campus&output=embed',
   emailjs: {
-    serviceId: 'YOUR_EMAILJS_SERVICE_ID',
-    templateId: 'YOUR_EMAILJS_TEMPLATE_ID',
-    officerTemplateId: 'YOUR_EMAILJS_OFFICER_TEMPLATE_ID',
-    publicKey: 'YOUR_EMAILJS_PUBLIC_KEY',
+    serviceId: 'service_64qfdcy',
+    templateId: 'template_j21qmii',
+    officerTemplateId: 'template_j21qmii',
+    publicKey: 'tNw7hEl-J4y6yRw9w',
     toEmail: 'contact@ssai.org'
   }
 };
