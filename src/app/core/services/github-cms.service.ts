@@ -42,7 +42,7 @@ export class GitHubCmsService {
     }
 
     const safeName = this.safeFileName(file.name);
-    const path = `public/assets/uploads/${category}/${Date.now()}-${safeName}`;
+    const path = `public/assets/uploads/${category}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
     const content = await this.fileToBase64(file);
     await this.putFile(path, content, `Upload ${category} media: ${safeName}`);
     const { owner, repo, branch } = this.settings();

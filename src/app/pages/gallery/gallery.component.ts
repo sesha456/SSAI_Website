@@ -71,7 +71,9 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <span>Upload single or multiple photos</span>
                 <input #photoUpload type="file" accept="image/png,image/jpeg,image/jpg,image/webp" multiple (change)="uploadPhotos(gallery, $event)">
               </label>
-              <button class="primary-btn" type="button" (click)="photoUpload.click()">Choose Photos From Computer</button>
+              <button class="primary-btn" type="button" (click)="photoUpload.click()" [disabled]="uploading()">
+                {{ uploading() ? 'Uploading Photos...' : 'Choose Photos From Computer' }}
+              </button>
               @if (uploadMessage()) {
                 <strong class="upload-message">{{ uploadMessage() }}</strong>
               }
@@ -167,6 +169,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
     .cover-upload > span { color: var(--muted); font-size: .85rem; font-weight: 800; }
     .cover-preview { min-height: 11rem; border: 1px solid var(--line); border-radius: .8rem; }
     .upload-message { color: var(--primary); }
+    .primary-btn:disabled { cursor: wait; opacity: .72; transform: none; }
     .carousel { display: grid; grid-template-columns: auto 1fr auto; gap: .8rem; align-items: center; padding: 1rem; }
     .carousel img { width: 100%; max-height: 62vh; object-fit: contain; border-radius: .8rem; cursor: zoom-in; }
     .photo-card { display: grid; gap: .7rem; padding: .8rem; }
@@ -191,6 +194,7 @@ export class GalleryComponent {
   readonly editingId = signal<number | null>(null);
   readonly carouselIndex = signal(0);
   readonly uploadMessage = signal('');
+  readonly uploading = signal(false);
   readonly galleries = computed(() => {
     this.content.version();
     return this.content.galleryCollections;
@@ -247,30 +251,40 @@ export class GalleryComponent {
   }
 
   async uploadPhotos(gallery: GalleryCollection, event: Event): Promise<void> {
-    if (!this.officer.canManage('galleries')) return;
+    if (!this.officer.requireActiveSession()) return;
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
     if (!files.length) return;
-    this.uploadMessage.set(`Uploading ${files.length} photo${files.length === 1 ? '' : 's'}...`);
-    const results = await Promise.allSettled(files.map(async (file) => {
-      const asset = await this.github.uploadImage(file, 'gallery', { galleryId: gallery.id });
-      return { title: file.name.replace(/\.[^.]+$/, ''), image: asset.url };
-    }));
-    const photos = results
-      .filter((result): result is PromiseFulfilledResult<GalleryPhoto> => result.status === 'fulfilled')
-      .map((result) => result.value);
-    const failed = results.length - photos.length;
-    if (!photos.length) {
-      this.uploadMessage.set('Upload failed. Please try again.');
-      input.value = '';
-      return;
+    this.uploading.set(true);
+    this.uploadMessage.set(`Uploading 0 of ${files.length} photos...`);
+    let uploaded = 0;
+    let failed = 0;
+
+    for (const [index, file] of files.entries()) {
+      if (!this.officer.requireActiveSession()) {
+        failed += files.length - index;
+        break;
+      }
+
+      try {
+        this.uploadMessage.set(`Uploading ${index + 1} of ${files.length} photos...`);
+        const asset = await this.github.uploadImage(file, 'gallery', { galleryId: gallery.id });
+        const photo = { title: this.photoTitle(file, index), image: asset.url };
+        this.content.addGalleryPhotos(gallery.id, [photo]);
+        uploaded += 1;
+        this.refreshActiveGallery(gallery.id);
+        const active = this.activeGallery();
+        const activePhotos = active ? this.photosFor(active) : [];
+        this.carouselIndex.set(Math.max(0, activePhotos.length - 1));
+      } catch {
+        failed += 1;
+      }
     }
-    this.content.addGalleryPhotos(gallery.id, photos);
-    this.refreshActiveGallery(gallery.id);
-    const active = this.activeGallery();
-    const activePhotos = active ? this.photosFor(active) : [];
-    this.carouselIndex.set(Math.max(0, activePhotos.length - photos.length));
-    this.uploadMessage.set(`${photos.length} photo${photos.length === 1 ? '' : 's'} uploaded${failed ? `, ${failed} failed` : ''}.`);
+
+    this.uploading.set(false);
+    this.uploadMessage.set(uploaded
+      ? `${uploaded} of ${files.length} photo${files.length === 1 ? '' : 's'} uploaded${failed ? `, ${failed} failed` : ''}.`
+      : 'Upload failed. Please try fewer photos or smaller image files.');
     input.value = '';
   }
 
@@ -310,5 +324,10 @@ export class GalleryComponent {
     if (updated) {
       this.activeGallery.set(updated);
     }
+  }
+
+  private photoTitle(file: File, index: number): string {
+    const title = file.name.replace(/\.[^.]+$/, '').trim();
+    return title && title !== 'image' ? title : `Photo ${index + 1}`;
   }
 }
