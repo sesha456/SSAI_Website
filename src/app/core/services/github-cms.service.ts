@@ -34,20 +34,22 @@ export class GitHubCmsService {
   }
 
   async uploadImage(file: File, category: MediaCategory, metadata: Pick<MediaAsset, 'galleryId'> = {}): Promise<MediaAsset> {
+    const uploadFile = await this.prepareImageForUpload(file);
+
     if (!this.isConfigured()) {
-      const url = await this.readAsDataUrl(file);
-      const asset = this.recordAsset(file, category, url, undefined, metadata);
+      const url = await this.readAsDataUrl(uploadFile);
+      const asset = this.recordAsset(uploadFile, category, url, undefined, metadata);
       this.status.set('Stored in this browser. Configure GitHub CMS settings for permanent public storage.');
       return asset;
     }
 
-    const safeName = this.safeFileName(file.name);
+    const safeName = this.safeFileName(uploadFile.name);
     const path = `public/assets/uploads/${category}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
-    const content = await this.fileToBase64(file);
+    const content = await this.fileToBase64(uploadFile);
     await this.putFile(path, content, `Upload ${category} media: ${safeName}`);
     const { owner, repo, branch } = this.settings();
     const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
-    const asset = this.recordAsset(file, category, url, path, metadata);
+    const asset = this.recordAsset(uploadFile, category, url, path, metadata);
     this.status.set(`${file.name} uploaded to GitHub.`);
     return asset;
   }
@@ -162,6 +164,50 @@ export class GitHubCmsService {
 
   private safeFileName(name: string): string {
     return name.toLowerCase().replace(/[^a-z0-9.]+/g, '-').replace(/(^-|-$)/g, '') || 'image.png';
+  }
+
+  private async prepareImageForUpload(file: File): Promise<File> {
+    if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.size < 900_000) {
+      return file;
+    }
+
+    try {
+      const dataUrl = await this.readAsDataUrl(file);
+      const image = await this.loadImage(dataUrl);
+      const maxDimension = 1600;
+      const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+      const width = Math.max(1, Math.round(image.naturalWidth * scale));
+      const height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) return file;
+
+      context.drawImage(image, 0, 0, width, height);
+      const blob = await this.canvasToBlob(canvas, 'image/jpeg', 0.82);
+      if (!blob || blob.size >= file.size) return file;
+
+      return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}-optimized.jpg`, {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+    } catch {
+      return file;
+    }
+  }
+
+  private loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Unable to read image file.'));
+      image.src = src;
+    });
+  }
+
+  private canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
+    return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
   }
 
   private fileToBase64(file: File): Promise<string> {

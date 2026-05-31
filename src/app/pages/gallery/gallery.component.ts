@@ -267,7 +267,7 @@ export class GalleryComponent {
       }
 
       try {
-        this.uploadMessage.set(`Uploading ${index + 1} of ${files.length} photos...`);
+        this.uploadMessage.set(`Optimizing and uploading ${index + 1} of ${files.length} photos...`);
         const asset = await this.github.uploadImage(file, 'gallery', { galleryId: gallery.id });
         const photo = { title: this.photoTitle(file, index), image: asset.url };
         this.content.addGalleryPhotos(gallery.id, [photo]);
@@ -276,7 +276,8 @@ export class GalleryComponent {
         const active = this.activeGallery();
         const activePhotos = active ? this.photosFor(active) : [];
         this.carouselIndex.set(Math.max(0, activePhotos.length - 1));
-      } catch {
+      } catch (error) {
+        console.error('Gallery photo upload failed', error);
         failed += 1;
       }
     }
