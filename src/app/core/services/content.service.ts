@@ -5,6 +5,8 @@ import { GitHubCmsService } from './github-cms.service';
 @Injectable({ providedIn: 'root' })
 export class ContentService {
   private readonly github = inject(GitHubCmsService);
+  private readonly editableResetVersion = '2026-05-31-gallery-upload-reset';
+  private readonly editableResetKey = 'ssai-editable-content-reset-version';
   private readonly editableStorageKey = 'ssai-editable-content';
   readonly version = signal(0);
   readonly saveMessage = signal('');
@@ -442,6 +444,12 @@ export class ContentService {
     URL.revokeObjectURL(url);
   }
 
+  clearEditableCache(): void {
+    localStorage.removeItem(this.editableStorageKey);
+    localStorage.setItem(this.editableResetKey, this.editableResetVersion);
+    this.saveMessage.set('CMS editable content cache cleared. Refresh the page to reload clean data.');
+  }
+
   private async loadEditableData(): Promise<void> {
     const [team, events, projects, galleries, siteContent] = await Promise.all([
       this.fetchJson<TeamMember[]>('/assets/data/leadership.json'),
@@ -474,6 +482,11 @@ export class ContentService {
 
   private loadStoredEditableData(): boolean {
     try {
+      if (localStorage.getItem(this.editableResetKey) !== this.editableResetVersion) {
+        localStorage.removeItem(this.editableStorageKey);
+        localStorage.setItem(this.editableResetKey, this.editableResetVersion);
+        return false;
+      }
       const stored = JSON.parse(localStorage.getItem(this.editableStorageKey) || 'null') as {
         team?: TeamMember[];
         events?: EventItem[];

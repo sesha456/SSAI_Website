@@ -5,6 +5,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { OfficerSessionService } from '../../core/services/officer-session.service';
 import { GitHubCmsService } from '../../core/services/github-cms.service';
+import { ContentService } from '../../core/services/content.service';
 import { SiteSettings, ThemeId, ThemeService } from '../../core/services/theme.service';
 
 @Component({
@@ -34,6 +35,11 @@ import { SiteSettings, ThemeId, ThemeService } from '../../core/services/theme.s
               <strong>{{ github.status() }}</strong>
             }
           </form>
+          <div class="danger-zone glass">
+            <h2>Clear CMS Data</h2>
+            <p class="hint">Clears this browser's CMS media library and editable content cache. Use this after broken uploads or test content.</p>
+            <button class="ghost-btn danger" type="button" (click)="clearCmsData()">Clear Browser CMS Data</button>
+          </div>
         } @else {
           <div class="locked glass">Super Admin access is required.</div>
         }
@@ -42,8 +48,9 @@ import { SiteSettings, ThemeId, ThemeService } from '../../core/services/theme.s
   `,
   styles: [`
     .page { padding-top: clamp(5rem, 10vw, 8rem); }
-    .settings, .locked { display: grid; gap: .9rem; margin-top: 1.5rem; padding: 1rem; border-radius: 1rem; }
+    .settings, .locked, .danger-zone { display: grid; gap: .9rem; margin-top: 1.5rem; padding: 1rem; border-radius: 1rem; }
     .primary-btn { width: fit-content; }
+    .danger { width: fit-content; border-color: rgba(255,122,144,.45); color: #ff9aaa; }
     .hint { margin: 0; color: var(--muted); line-height: 1.6; }
     h2 { margin: 1rem 0 0; }
   `]
@@ -52,6 +59,7 @@ export class SettingsComponent {
   private readonly fb = new FormBuilder();
   readonly themeService = inject(ThemeService);
   readonly github = inject(GitHubCmsService);
+  readonly content = inject(ContentService);
   readonly officer = inject(OfficerSessionService);
   readonly themes: ThemeId[] = ['ai-neon', 'cyberpunk-city', 'deep-space-ai', 'research-lab', 'data-network-world', 'agentic-ai', 'healthcare-ai', 'unt-academic'];
   readonly current = this.themeService.settings();
@@ -84,5 +92,14 @@ export class SettingsComponent {
       branch: value.githubBranch,
       token: value.githubToken
     });
+  }
+
+  clearCmsData(): void {
+    if (!confirm('Clear this browser CMS media library and editable content cache?')) return;
+    this.github.clearMediaLibrary();
+    this.content.clearEditableCache();
+    localStorage.removeItem('ssai-media-library');
+    localStorage.removeItem('ssai-editable-content');
+    window.location.reload();
   }
 }

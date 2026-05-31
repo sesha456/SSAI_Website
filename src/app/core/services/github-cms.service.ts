@@ -10,6 +10,8 @@ export interface GitHubCmsSettings {
 
 @Injectable({ providedIn: 'root' })
 export class GitHubCmsService {
+  private readonly mediaResetVersion = '2026-05-31-gallery-upload-reset';
+  private readonly mediaResetKey = 'ssai-media-library-reset-version';
   private readonly settingsKey = 'ssai-github-cms-settings';
   private readonly mediaKey = 'ssai-media-library';
 
@@ -85,6 +87,13 @@ export class GitHubCmsService {
     return this.uploadImage(file, asset.category);
   }
 
+  clearMediaLibrary(): void {
+    this.media.set([]);
+    localStorage.removeItem(this.mediaKey);
+    localStorage.setItem(this.mediaResetKey, this.mediaResetVersion);
+    this.status.set('CMS media library cleared.');
+  }
+
   private async putFile(path: string, content: string, message: string): Promise<void> {
     const existing = await this.getFile(path);
     await this.request(path, {
@@ -152,6 +161,11 @@ export class GitHubCmsService {
 
   private readMedia(): MediaAsset[] {
     try {
+      if (localStorage.getItem(this.mediaResetKey) !== this.mediaResetVersion) {
+        localStorage.removeItem(this.mediaKey);
+        localStorage.setItem(this.mediaResetKey, this.mediaResetVersion);
+        return [];
+      }
       return JSON.parse(localStorage.getItem(this.mediaKey) || '[]') as MediaAsset[];
     } catch {
       return [];
