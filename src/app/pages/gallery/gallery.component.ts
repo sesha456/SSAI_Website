@@ -33,7 +33,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <span class="eyebrow">{{ gallery.eventDate | date: 'MMM d, y' }}</span>
                 <h2>{{ gallery.title }}</h2>
                 <p>{{ gallery.description }}</p>
-                <strong>{{ gallery.photos.length }} photos</strong>
+                <strong>{{ photosFor(gallery).length }} photos</strong>
                 <div class="card-actions">
                   <button class="primary-btn" type="button" (click)="openGallery(gallery)">Open Gallery</button>
                   @if (officer.canManage('galleries')) {
@@ -78,14 +78,15 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
             </div>
           }
 
-          @if (gallery.photos.length) {
+          @if (photosFor(gallery); as photos) {
+            @if (photos.length) {
             <div class="carousel glass">
               <button type="button" (click)="previousPhoto(gallery)" aria-label="Previous photo"><mat-icon>chevron_left</mat-icon></button>
-              <img [src]="gallery.photos[carouselIndex()].image" [alt]="gallery.photos[carouselIndex()].title" (click)="lightboxPhoto.set(gallery.photos[carouselIndex()])">
+              <img [src]="photos[carouselIndex()].image" [alt]="photos[carouselIndex()].title" (click)="lightboxPhoto.set(photos[carouselIndex()])">
               <button type="button" (click)="nextPhoto(gallery)" aria-label="Next photo"><mat-icon>chevron_right</mat-icon></button>
             </div>
             <div class="photo-grid top-gap">
-              @for (photo of gallery.photos; track photo.image; let i = $index) {
+              @for (photo of photos; track photo.image; let i = $index) {
                 <article class="photo-card glass">
                   <img [src]="photo.image" [alt]="photo.title" (click)="lightboxPhoto.set(photo)">
                   <strong>{{ photo.title }}</strong>
@@ -99,6 +100,9 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 </article>
               }
             </div>
+            } @else {
+              <div class="empty-state glass">No photos are attached to this gallery yet.</div>
+            }
           }
         </div>
       </section>
@@ -154,7 +158,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
     .card-actions button { cursor: pointer; }
     .manage-actions { position: absolute; top: .8rem; right: .8rem; }
     .manage-actions button, .photo-actions button, .carousel button { display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border: 1px solid var(--line); border-radius: .7rem; background: var(--surface-strong); color: var(--text); cursor: pointer; }
-    .upload-panel, .carousel, .photo-card, .editor { border-radius: 1rem; }
+    .upload-panel, .carousel, .photo-card, .editor, .empty-state { border-radius: 1rem; }
     .upload-panel { display: grid; gap: .8rem; margin: 1rem 0; padding: 1rem; }
     .upload-box { display: grid; min-height: 8rem; place-items: center; border: 1px dashed var(--line); border-radius: .9rem; color: var(--muted); cursor: pointer; text-align: center; }
     .upload-box.compact { min-height: 5rem; }
@@ -167,6 +171,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
     .carousel img { width: 100%; max-height: 62vh; object-fit: contain; border-radius: .8rem; cursor: zoom-in; }
     .photo-card { display: grid; gap: .7rem; padding: .8rem; }
     .photo-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: .8rem; cursor: zoom-in; }
+    .empty-state { margin-top: 1rem; padding: 1rem; color: var(--muted); font-weight: 800; }
     .modal, .lightbox { position: fixed; inset: 0; z-index: 70; display: grid; padding: 1rem; background: rgba(0,0,0,.76); place-items: center; }
     .editor { display: grid; width: min(620px, 100%); gap: .8rem; padding: 1rem; }
     .editor-actions { display: flex; gap: .7rem; justify-content: flex-end; }
@@ -247,12 +252,25 @@ export class GalleryComponent {
     const files = Array.from(input.files ?? []);
     if (!files.length) return;
     this.uploadMessage.set(`Uploading ${files.length} photo${files.length === 1 ? '' : 's'}...`);
-    const photos = await Promise.all(files.map(async (file) => ({ title: file.name.replace(/\.[^.]+$/, ''), image: (await this.github.uploadImage(file, 'gallery')).url })));
+    const results = await Promise.allSettled(files.map(async (file) => {
+      const asset = await this.github.uploadImage(file, 'gallery', { galleryId: gallery.id });
+      return { title: file.name.replace(/\.[^.]+$/, ''), image: asset.url };
+    }));
+    const photos = results
+      .filter((result): result is PromiseFulfilledResult<GalleryPhoto> => result.status === 'fulfilled')
+      .map((result) => result.value);
+    const failed = results.length - photos.length;
+    if (!photos.length) {
+      this.uploadMessage.set('Upload failed. Please try again.');
+      input.value = '';
+      return;
+    }
     this.content.addGalleryPhotos(gallery.id, photos);
     this.refreshActiveGallery(gallery.id);
     const active = this.activeGallery();
-    this.carouselIndex.set(active ? Math.max(0, active.photos.length - photos.length) : 0);
-    this.uploadMessage.set(`${photos.length} photo${photos.length === 1 ? '' : 's'} uploaded.`);
+    const activePhotos = active ? this.photosFor(active) : [];
+    this.carouselIndex.set(Math.max(0, activePhotos.length - photos.length));
+    this.uploadMessage.set(`${photos.length} photo${photos.length === 1 ? '' : 's'} uploaded${failed ? `, ${failed} failed` : ''}.`);
     input.value = '';
   }
 
@@ -265,11 +283,22 @@ export class GalleryComponent {
   }
 
   nextPhoto(gallery: GalleryCollection): void {
-    this.carouselIndex.set(gallery.photos.length ? (this.carouselIndex() + 1) % gallery.photos.length : 0);
+    const photos = this.photosFor(gallery);
+    this.carouselIndex.set(photos.length ? (this.carouselIndex() + 1) % photos.length : 0);
   }
 
   previousPhoto(gallery: GalleryCollection): void {
-    this.carouselIndex.set(gallery.photos.length ? (this.carouselIndex() - 1 + gallery.photos.length) % gallery.photos.length : 0);
+    const photos = this.photosFor(gallery);
+    this.carouselIndex.set(photos.length ? (this.carouselIndex() - 1 + photos.length) % photos.length : 0);
+  }
+
+  photosFor(gallery: GalleryCollection): GalleryPhoto[] {
+    const saved = gallery.photos;
+    const savedImages = new Set(saved.map((photo) => photo.image));
+    const uploaded = this.github.media()
+      .filter((asset) => asset.category === 'gallery' && asset.galleryId === gallery.id && !savedImages.has(asset.url))
+      .map((asset) => ({ title: asset.name.replace(/\.[^.]+$/, ''), image: asset.url }));
+    return [...saved, ...uploaded];
   }
 
   imageBackground(value: string): string {

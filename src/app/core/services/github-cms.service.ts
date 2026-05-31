@@ -33,10 +33,10 @@ export class GitHubCmsService {
     this.status.set('GitHub CMS settings saved.');
   }
 
-  async uploadImage(file: File, category: MediaCategory): Promise<MediaAsset> {
+  async uploadImage(file: File, category: MediaCategory, metadata: Pick<MediaAsset, 'galleryId'> = {}): Promise<MediaAsset> {
     if (!this.isConfigured()) {
       const url = await this.readAsDataUrl(file);
-      const asset = this.recordAsset(file, category, url);
+      const asset = this.recordAsset(file, category, url, undefined, metadata);
       this.status.set('Stored in this browser. Configure GitHub CMS settings for permanent public storage.');
       return asset;
     }
@@ -47,7 +47,7 @@ export class GitHubCmsService {
     await this.putFile(path, content, `Upload ${category} media: ${safeName}`);
     const { owner, repo, branch } = this.settings();
     const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
-    const asset = this.recordAsset(file, category, url, path);
+    const asset = this.recordAsset(file, category, url, path, metadata);
     this.status.set(`${file.name} uploaded to GitHub.`);
     return asset;
   }
@@ -123,13 +123,14 @@ export class GitHubCmsService {
     return response.json();
   }
 
-  private recordAsset(file: File, category: MediaCategory, url: string, path?: string): MediaAsset {
+  private recordAsset(file: File, category: MediaCategory, url: string, path?: string, metadata: Pick<MediaAsset, 'galleryId'> = {}): MediaAsset {
     const asset: MediaAsset = {
       id: `${Date.now()}-${crypto.randomUUID()}`,
       name: file.name,
       category,
       url,
       path,
+      ...metadata,
       size: file.size,
       type: file.type,
       uploadedAt: new Date().toISOString()

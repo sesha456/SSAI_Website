@@ -73,6 +73,7 @@ export interface MediaAsset {
   category: MediaCategory;
   url: string;
   path?: string;
+  galleryId?: number;
   size: number;
   type: string;
   uploadedAt: string;
