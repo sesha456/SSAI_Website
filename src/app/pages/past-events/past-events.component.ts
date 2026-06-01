@@ -1,16 +1,17 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { ContentService } from '../../core/services/content.service';
 import { OfficerSessionService } from '../../core/services/officer-session.service';
+import { EventCardComponent } from '../../shared/components/event-card/event-card.component';
 import { PastEventCardComponent } from '../../shared/components/past-event-card/past-event-card.component';
 
 @Component({
   selector: 'app-past-events',
   standalone: true,
-  imports: [PastEventCardComponent, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
+  imports: [PastEventCardComponent, EventCardComponent, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule],
   template: `
     <section class="section page">
       <div class="section__inner reveal">
@@ -21,6 +22,9 @@ import { PastEventCardComponent } from '../../shared/components/past-event-card/
           <button class="edit-heading" type="button" (click)="openHeroEditor()"><mat-icon>edit</mat-icon>Edit</button>
         }
         <div class="event-list">
+          @for (event of dynamicPastEvents(); track event.id) {
+            <app-event-card [event]="event" />
+          }
           @for (event of content.pastEvents; track event.slug) {
             <app-past-event-card [event]="event" />
           }
@@ -58,6 +62,10 @@ export class PastEventsComponent {
   private readonly fb = new FormBuilder();
   readonly content = inject(ContentService);
   readonly officer = inject(OfficerSessionService);
+  readonly dynamicPastEvents = computed(() => {
+    this.content.version();
+    return this.content.events.filter((event) => (event.status ?? 'Upcoming') === 'Past');
+  });
   heroEditorOpen = false;
   readonly heroForm = this.fb.nonNullable.group({
     eyebrow: ['', Validators.required],

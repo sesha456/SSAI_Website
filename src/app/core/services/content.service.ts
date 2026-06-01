@@ -72,6 +72,8 @@ export class ContentService {
       title: 'Applied AI Research Night',
       tagline: 'Student research lightning talks',
       category: 'Research',
+      status: 'Upcoming',
+      eventType: 'Research Showcase',
       date: '2026-06-12',
       time: '5:30 PM',
       venue: 'Innovation Hall Auditorium',
@@ -97,6 +99,8 @@ export class ContentService {
       title: 'Generative AI Build Workshop',
       tagline: 'Hands-on applied AI practice',
       category: 'Workshop',
+      status: 'Upcoming',
+      eventType: 'Workshop',
       date: '2026-06-20',
       time: '2:00 PM',
       venue: 'AI Lab 204',
@@ -119,6 +123,8 @@ export class ContentService {
       title: 'Campus AI Hackathon',
       tagline: 'Prototype useful AI systems in one day',
       category: 'Competition',
+      status: 'Upcoming',
+      eventType: 'Hackathon',
       date: '2026-07-11',
       time: '9:00 AM',
       venue: 'Engineering Commons',
@@ -141,6 +147,8 @@ export class ContentService {
       title: 'Industry AI Mixer',
       tagline: 'Meet builders, founders, and recruiters',
       category: 'Networking',
+      status: 'Upcoming',
+      eventType: 'Networking Event',
       date: '2026-07-25',
       time: '6:00 PM',
       venue: 'University Center',
@@ -332,9 +340,8 @@ export class ContentService {
   ];
 
   constructor() {
-    if (!this.loadStoredEditableData()) {
-      void this.loadEditableData();
-    }
+    this.loadStoredEditableData();
+    void this.loadEditableData();
   }
 
   addTeamMember(member: TeamMember): void {
@@ -545,8 +552,11 @@ export class ContentService {
   }
 
   private normalizeEvent(event: EventItem): EventItem {
+    const eventType = event.eventType || this.inferEventType(event);
     return {
       ...event,
+      status: event.status || this.inferStatus(event.date),
+      eventType,
       slug: event.slug || this.slugify(event.title),
       registrationLink: event.registrationLink || `mailto:events@ssai.org?subject=Register%20for%20${encodeURIComponent(event.title)}`,
       page: {
@@ -556,9 +566,44 @@ export class ContentService {
         gallery: event.page?.gallery ?? [],
         sponsors: event.page?.sponsors ?? [],
         videos: event.page?.videos ?? [],
-        customSections: event.page?.customSections ?? []
+        customSections: event.page?.customSections ?? [],
+        sectionOrder: event.page?.sectionOrder ?? this.defaultSectionOrder(eventType),
+        enabledSections: { ...this.defaultEnabledSections(eventType), ...(event.page?.enabledSections ?? {}) }
       }
     };
+  }
+
+  private inferStatus(date: string): EventItem['status'] {
+    const eventTime = new Date(`${date}T23:59:59`).getTime();
+    return Number.isFinite(eventTime) && eventTime < Date.now() ? 'Past' : 'Upcoming';
+  }
+
+  private inferEventType(event: EventItem): NonNullable<EventItem['eventType']> {
+    if (event.category === 'Workshop') return 'Workshop';
+    if (event.category === 'Competition') return event.title.toLowerCase().includes('hackathon') ? 'Hackathon' : 'Competition';
+    if (event.category === 'Networking') return 'Networking Event';
+    if (event.category === 'Research') return 'Research Showcase';
+    return 'Custom Event';
+  }
+
+  private defaultSectionOrder(eventType: NonNullable<EventItem['eventType']>): NonNullable<EventItem['page']>['sectionOrder'] {
+    const map: Record<NonNullable<EventItem['eventType']>, string[]> = {
+      Conference: ['about', 'highlights', 'speakers', 'agenda', 'sponsors', 'gallery', 'videos', 'registration'],
+      Workshop: ['about', 'instructors', 'learningOutcomes', 'resources', 'gallery', 'registration'],
+      Seminar: ['about', 'speakers', 'gallery'],
+      'Guest Lecture': ['about', 'speakers', 'gallery', 'registration'],
+      'Research Showcase': ['about', 'posters', 'presenters', 'awards', 'gallery'],
+      Hackathon: ['about', 'tracks', 'rules', 'judges', 'prizes', 'sponsors', 'registration', 'gallery'],
+      'Networking Event': ['about', 'highlights', 'speakers', 'gallery', 'registration'],
+      Webinar: ['about', 'speakers', 'resources', 'videos', 'registration'],
+      Competition: ['about', 'rules', 'judges', 'prizes', 'sponsors', 'gallery', 'registration'],
+      'Custom Event': ['about', 'highlights', 'speakers', 'gallery', 'customSections']
+    };
+    return map[eventType];
+  }
+
+  private defaultEnabledSections(eventType: NonNullable<EventItem['eventType']>): NonNullable<EventItem['page']>['enabledSections'] {
+    return Object.fromEntries((this.defaultSectionOrder(eventType) ?? []).map((section) => [section, true])) as NonNullable<EventItem['page']>['enabledSections'];
   }
 
   private slugify(value: string): string {

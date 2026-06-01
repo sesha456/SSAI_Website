@@ -58,6 +58,8 @@ import { EventItem } from '../../shared/models/content.models';
           <mat-form-field appearance="outline"><mat-label>Event Title</mat-label><input matInput formControlName="title"></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Tagline</mat-label><input matInput formControlName="tagline"></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Category</mat-label><mat-select formControlName="category">@for (category of eventCategories; track category) { <mat-option [value]="category">{{ category }}</mat-option> }</mat-select></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Status</mat-label><mat-select formControlName="status">@for (status of eventStatuses; track status) { <mat-option [value]="status">{{ status }}</mat-option> }</mat-select></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Event Type</mat-label><mat-select formControlName="eventType">@for (type of eventTypes; track type) { <mat-option [value]="type">{{ type }}</mat-option> }</mat-select></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Date</mat-label><input matInput type="date" formControlName="date"></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Time</mat-label><input matInput formControlName="time"></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Venue</mat-label><input matInput formControlName="venue"></mat-form-field>
@@ -105,6 +107,8 @@ export class EventsComponent {
   readonly selected = signal<EventItem['category'] | 'All'>('All');
   readonly categories: Array<EventItem['category'] | 'All'> = ['All', 'Workshop', 'Research', 'Competition', 'Networking'];
   readonly eventCategories: EventItem['category'][] = ['Workshop', 'Research', 'Competition', 'Networking'];
+  readonly eventStatuses: Array<NonNullable<EventItem['status']>> = ['Upcoming', 'Current', 'Past'];
+  readonly eventTypes: Array<NonNullable<EventItem['eventType']>> = ['Conference', 'Workshop', 'Seminar', 'Guest Lecture', 'Research Showcase', 'Hackathon', 'Networking Event', 'Webinar', 'Competition', 'Custom Event'];
   readonly editorOpen = signal(false);
   readonly heroEditorOpen = signal(false);
   readonly editingId = signal<number | null>(null);
@@ -117,6 +121,8 @@ export class EventsComponent {
     title: ['', Validators.required],
     tagline: [''],
     category: ['Workshop' as EventItem['category'], Validators.required],
+    status: ['Upcoming' as NonNullable<EventItem['status']>, Validators.required],
+    eventType: ['Workshop' as NonNullable<EventItem['eventType']>, Validators.required],
     date: ['', Validators.required],
     time: ['', Validators.required],
     venue: ['', Validators.required],
@@ -130,13 +136,14 @@ export class EventsComponent {
   readonly filteredEvents = computed(() => {
     this.content.version();
     const category = this.selected();
-    return category === 'All' ? this.content.events : this.content.events.filter((event) => event.category === category);
+    const activeEvents = this.content.events.filter((event) => (event.status ?? 'Upcoming') !== 'Past');
+    return category === 'All' ? activeEvents : activeEvents.filter((event) => event.category === category);
   });
 
   openAdd(): void {
     if (!this.officer.requireActiveSession()) return;
     this.editingId.set(null);
-    this.form.reset({ category: 'Workshop', image: 'linear-gradient(135deg, #45f0d1, #2563eb)' });
+    this.form.reset({ category: 'Workshop', status: 'Upcoming', eventType: 'Workshop', image: 'linear-gradient(135deg, #45f0d1, #2563eb)' });
     this.editorOpen.set(true);
   }
 
@@ -162,6 +169,8 @@ export class EventsComponent {
       title: event.title,
       tagline: event.tagline ?? '',
       category: event.category,
+      status: event.status ?? 'Upcoming',
+      eventType: event.eventType ?? 'Workshop',
       date: event.date,
       time: event.time,
       venue: event.venue,
@@ -188,6 +197,8 @@ export class EventsComponent {
       title: value.title,
       tagline: value.tagline,
       category: value.category,
+      status: value.status,
+      eventType: value.eventType,
       date: value.date,
       time: value.time,
       venue: value.venue,

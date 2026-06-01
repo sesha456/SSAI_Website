@@ -12,7 +12,11 @@ import { EventItem } from '../../models/content.models';
     <article class="event glass">
       <div class="event__image" [style.background]="event().image"></div>
       <div class="event__body">
-        <span class="pill">{{ event().category }}</span>
+        <div class="chips">
+          <span class="pill">{{ event().category }}</span>
+          <span class="pill">{{ event().status || 'Upcoming' }}</span>
+          <span class="pill">{{ event().eventType || 'Custom Event' }}</span>
+        </div>
         <h3>{{ event().title }}</h3>
         <p>{{ event().description }}</p>
         <div class="meta">

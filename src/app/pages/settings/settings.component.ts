@@ -25,10 +25,11 @@ import { SiteSettings, ThemeId, ThemeService } from '../../core/services/theme.s
             <mat-form-field appearance="outline"><mat-label>Carousel Speed (ms)</mat-label><input matInput type="number" formControlName="carouselSpeed"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Homepage / Event Announcements JSON</mat-label><textarea matInput rows="8" formControlName="announcements"></textarea></mat-form-field>
             <h2>GitHub CMS Storage</h2>
-            <p class="hint">Uploads now use the secure Vercel API. The GitHub token is stored privately in Vercel, not in the browser.</p>
+            <p class="hint">This static site writes directly to GitHub from the officer browser. Configure this once per device to make edits permanent and visible everywhere.</p>
             <mat-form-field appearance="outline"><mat-label>GitHub Owner</mat-label><input matInput formControlName="githubOwner"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Repository Name</mat-label><input matInput formControlName="githubRepo"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Branch</mat-label><input matInput formControlName="githubBranch"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>Fine-grained GitHub Token</mat-label><input matInput type="password" formControlName="githubToken"></mat-form-field>
             <button class="primary-btn" type="submit">Save Settings</button>
             @if (github.status()) {
               <strong>{{ github.status() }}</strong>
@@ -72,7 +73,7 @@ export class SettingsComponent {
     githubOwner: [this.githubCurrent.owner || 'sesha456'],
     githubRepo: [this.githubCurrent.repo || 'SSAI_Website'],
     githubBranch: [this.githubCurrent.branch || 'main'],
-    githubToken: ['']
+    githubToken: [this.githubCurrent.token]
   });
 
   save(): void {

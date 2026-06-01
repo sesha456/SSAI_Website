@@ -4,6 +4,8 @@ export interface EventItem {
   title: string;
   tagline?: string;
   category: 'Workshop' | 'Research' | 'Competition' | 'Networking';
+  status?: EventStatus;
+  eventType?: EventType;
   date: string;
   time: string;
   venue: string;
@@ -15,6 +17,20 @@ export interface EventItem {
   highlights?: string[];
   page?: EventPageContent;
 }
+
+export type EventStatus = 'Upcoming' | 'Current' | 'Past';
+
+export type EventType =
+  | 'Conference'
+  | 'Workshop'
+  | 'Seminar'
+  | 'Guest Lecture'
+  | 'Research Showcase'
+  | 'Hackathon'
+  | 'Networking Event'
+  | 'Webinar'
+  | 'Competition'
+  | 'Custom Event';
 
 export interface ProjectItem {
   id: number;
@@ -187,14 +203,52 @@ export interface CustomEventSection {
   layout: 'Text' | 'Cards';
   content: string;
   image?: string;
+  enabled?: boolean;
+  order?: number;
 }
 
 export interface EventPageContent {
   about: string;
+  sectionOrder?: string[];
+  enabledSections?: Partial<Record<EventTemplateSection, boolean>>;
   highlights: Highlight[];
   speakers: EventSpeaker[];
+  instructors?: EventSpeaker[];
+  judges?: EventSpeaker[];
+  presenters?: EventSpeaker[];
+  learningOutcomes?: string[];
+  resources?: Array<{ title: string; url: string }>;
+  agenda?: Array<{ time: string; title: string }>;
+  rules?: string[];
+  tracks?: string[];
+  prizes?: string[];
+  posters?: Array<{ title: string; presenter: string; mentor?: string; abstract?: string }>;
+  awards?: Array<{ title: string; recipient: string; description?: string }>;
   gallery: GalleryItem[];
   sponsors: EventSponsor[];
   videos: EventVideo[];
   customSections: CustomEventSection[];
 }
+
+export type EventTemplateSection =
+  | 'about'
+  | 'speakers'
+  | 'instructors'
+  | 'learningOutcomes'
+  | 'resources'
+  | 'gallery'
+  | 'sponsors'
+  | 'videos'
+  | 'highlights'
+  | 'networking'
+  | 'agenda'
+  | 'registration'
+  | 'rules'
+  | 'tracks'
+  | 'judges'
+  | 'prizes'
+  | 'posters'
+  | 'presenters'
+  | 'mentors'
+  | 'awards'
+  | 'customSections';

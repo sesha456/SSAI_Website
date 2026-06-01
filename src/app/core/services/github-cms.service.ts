@@ -16,16 +16,12 @@ export class GitHubCmsService {
   private readonly mediaKey = 'ssai-media-library';
 
   readonly settings = signal<GitHubCmsSettings>(this.readSettings());
-  readonly serverConfigured = signal(true);
   readonly media = signal<MediaAsset[]>(this.readMedia());
   readonly status = signal('');
 
-  constructor() {
-    void this.refreshServerStatus();
-  }
-
   isConfigured(): boolean {
-    return this.serverConfigured();
+    const settings = this.settings();
+    return !!settings.owner && !!settings.repo && !!settings.branch && !!settings.token;
   }
 
   saveSettings(settings: GitHubCmsSettings): void {
@@ -41,30 +37,44 @@ export class GitHubCmsService {
 
   async uploadImage(file: File, category: MediaCategory, metadata: Pick<MediaAsset, 'galleryId'> = {}): Promise<MediaAsset> {
     const uploadFile = await this.prepareImageForUpload(file);
+    if (!this.isConfigured()) {
+      throw new Error('GitHub CMS is not configured. Save a GitHub token in Settings first.');
+    }
 
     const safeName = this.safeFileName(uploadFile.name);
+    const path = `public/assets/uploads/${category}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
     const content = await this.fileToBase64(uploadFile);
-    const result = await this.api<{ asset: MediaAsset }>('/api/cms-upload', {
-      category,
-      content,
+    await this.putFile(path, content, `Upload ${category} media: ${safeName}`);
+    const { owner, repo, branch } = this.settings();
+    const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
+    const asset = this.recordAsset({
+      id: `${Date.now()}-${crypto.randomUUID()}`,
       name: safeName,
+      category,
+      url,
+      path,
+      ...metadata,
       size: uploadFile.size,
       type: uploadFile.type,
-      ...metadata
+      uploadedAt: new Date().toISOString()
     });
-    const asset = this.recordAsset(result.asset);
     this.status.set(`${file.name} uploaded to GitHub.`);
     return asset;
   }
 
   async saveJson(path: string, data: unknown): Promise<void> {
-    await this.api('/api/cms-json', { path, data });
+    if (!this.isConfigured()) {
+      this.status.set('GitHub CMS is not configured. Changes are saved only in this browser until Settings are configured.');
+      return;
+    }
+    const content = this.textToBase64(JSON.stringify(data, null, 2));
+    await this.putFile(path, content, `Update ${path}`);
     this.status.set(`${path} saved to GitHub.`);
   }
 
   async deleteAsset(asset: MediaAsset): Promise<void> {
-    if (asset.path) {
-      await this.api('/api/cms-delete', { path: asset.path });
+    if (asset.path && this.isConfigured()) {
+      await this.deleteFile(asset.path, `Delete media: ${asset.name}`);
     }
     this.media.set(this.media().filter((item) => item.id !== asset.id));
     this.persistMedia();
@@ -82,33 +92,57 @@ export class GitHubCmsService {
     this.status.set('CMS media library cleared.');
   }
 
-  private async refreshServerStatus(): Promise<void> {
+  private async putFile(path: string, content: string, message: string): Promise<void> {
+    const existing = await this.getFile(path);
+    await this.request(path, {
+      method: 'PUT',
+      body: JSON.stringify({
+        message,
+        content,
+        branch: this.settings().branch,
+        ...(existing?.sha ? { sha: existing.sha } : {})
+      })
+    });
+  }
+
+  private async deleteFile(path: string, message: string): Promise<void> {
+    const existing = await this.getFile(path);
+    if (!existing?.sha) return;
+    await this.request(path, {
+      method: 'DELETE',
+      body: JSON.stringify({
+        message,
+        sha: existing.sha,
+        branch: this.settings().branch
+      })
+    });
+  }
+
+  private async getFile(path: string): Promise<{ sha?: string } | null> {
     try {
-      const response = await fetch('/api/cms-status');
-      const result = await response.json() as { configured?: boolean };
-      this.serverConfigured.set(Boolean(result.configured));
+      return await this.request(path, { method: 'GET' }) as { sha?: string };
     } catch {
-      this.serverConfigured.set(false);
+      return null;
     }
   }
 
-  private async api<T = unknown>(url: string, body: unknown): Promise<T> {
-    const response = await fetch(url, {
-      method: 'POST',
+  private async request(path: string, init: RequestInit): Promise<unknown> {
+    const { owner, repo, branch, token } = this.settings();
+    const separator = path.includes('?') ? '&' : '?';
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}${separator}ref=${encodeURIComponent(branch)}`, {
+      ...init,
       headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        ...(init.headers ?? {})
+      }
     });
-
     if (!response.ok) {
-      const result = await response.json().catch(() => ({ message: 'CMS request failed.' })) as { message?: string };
-      throw new Error(result.message || `CMS request failed: ${response.status}`);
+      throw new Error(`GitHub request failed: ${response.status}`);
     }
-
-    const result = await response.json() as { ok?: boolean; message?: string } & T;
-    if (result.ok === false) throw new Error(result.message || 'CMS request failed.');
-    return result;
+    return response.json();
   }
 
   private recordAsset(asset: MediaAsset): MediaAsset {
@@ -197,6 +231,12 @@ export class GitHubCmsService {
       bytes.forEach((byte) => binary += String.fromCharCode(byte));
       return btoa(binary);
     });
+  }
+
+  private textToBase64(value: string): string {
+    let binary = '';
+    new TextEncoder().encode(value).forEach((byte) => binary += String.fromCharCode(byte));
+    return btoa(binary);
   }
 
   private readAsDataUrl(file: File): Promise<string> {

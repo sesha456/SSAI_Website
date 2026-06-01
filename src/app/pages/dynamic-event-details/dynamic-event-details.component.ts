@@ -20,11 +20,12 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
       <section class="event-hero section" [style.background]="event.image">
         <div class="event-hero__shade"></div>
         <div class="section__inner event-hero__content reveal">
-          <span class="eyebrow">{{ event.category }}</span>
+          <span class="eyebrow">{{ event.status || 'Upcoming' }} | {{ event.eventType || event.category }}</span>
           <h1>{{ event.title }}</h1>
           <p>{{ event.tagline || event.description }}</p>
           <div class="badges">
             <span><mat-icon>calendar_today</mat-icon>{{ event.date | date: 'MMMM d, y' }}</span>
+            <span><mat-icon>category</mat-icon>{{ event.eventType || event.category }}</span>
             <span><mat-icon>schedule</mat-icon>{{ event.time }}</span>
             <span><mat-icon>location_on</mat-icon>{{ event.venue }}</span>
             @if (event.organizingTeam) {
@@ -44,7 +45,7 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
       <section class="section">
         <div class="section__inner two-col reveal">
           <div>
-            <span class="eyebrow">About Event</span>
+            <span class="eyebrow">About {{ event.eventType || 'Event' }}</span>
             <h2 class="section-title">{{ event.title }}</h2>
           </div>
           <div class="rich-copy" [innerHTML]="event.page?.about || event.description"></div>
@@ -464,8 +465,21 @@ export class DynamicEventDetailsComponent {
   private page(event: EventItem): EventPageContent {
     return {
       about: event.page?.about || event.description,
+      sectionOrder: [...(event.page?.sectionOrder ?? [])],
+      enabledSections: { ...(event.page?.enabledSections ?? {}) },
       highlights: [...(event.page?.highlights ?? [])],
       speakers: [...(event.page?.speakers ?? [])],
+      instructors: [...(event.page?.instructors ?? [])],
+      judges: [...(event.page?.judges ?? [])],
+      presenters: [...(event.page?.presenters ?? [])],
+      learningOutcomes: [...(event.page?.learningOutcomes ?? [])],
+      resources: [...(event.page?.resources ?? [])],
+      agenda: [...(event.page?.agenda ?? [])],
+      rules: [...(event.page?.rules ?? [])],
+      tracks: [...(event.page?.tracks ?? [])],
+      prizes: [...(event.page?.prizes ?? [])],
+      posters: [...(event.page?.posters ?? [])],
+      awards: [...(event.page?.awards ?? [])],
       gallery: [...(event.page?.gallery ?? [])],
       sponsors: [...(event.page?.sponsors ?? [])],
       videos: [...(event.page?.videos ?? [])],
