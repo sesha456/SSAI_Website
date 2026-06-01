@@ -17,6 +17,9 @@ import { MediaAsset, MediaCategory } from '../../shared/models/content.models';
         <h1 class="section-title">Uploaded SSAI website images.</h1>
         @if (officer.canManage('galleries')) {
           <div class="toolbar glass">
+            @if (!github.isConfigured()) {
+              <p class="status warning">GitHub CMS is not configured on this browser. Uploads are disabled because local-only media will not show on other devices.</p>
+            }
             <label>
               <span>Category</span>
               <select [ngModel]="category()" (ngModelChange)="setCategory($event)">
@@ -28,7 +31,7 @@ import { MediaAsset, MediaCategory } from '../../shared/models/content.models';
             <label class="upload">
               <mat-icon>cloud_upload</mat-icon>
               <span>Upload Images</span>
-              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" multiple (change)="upload($event)">
+              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" multiple (change)="upload($event)" [disabled]="!github.isConfigured()">
             </label>
             <input class="search" [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Search images">
           </div>
@@ -64,6 +67,7 @@ import { MediaAsset, MediaCategory } from '../../shared/models/content.models';
     .page { padding-top: clamp(5rem, 10vw, 8rem); }
     .top-gap { margin-top: 1.5rem; }
     .toolbar { display: flex; gap: .8rem; align-items: end; flex-wrap: wrap; margin-top: 1.5rem; padding: 1rem; border-radius: 1rem; }
+    .toolbar .status { flex: 1 0 100%; margin: 0; }
     .toolbar label { display: grid; gap: .35rem; color: var(--muted); font-weight: 800; }
     select, .search { min-height: 2.75rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--surface-strong); color: var(--text); padding: 0 .8rem; }
     .upload { min-height: 2.75rem; grid-auto-flow: column; place-items: center; padding: 0 .9rem; border: 1px solid var(--line); border-radius: .75rem; color: var(--text); cursor: pointer; }
@@ -73,6 +77,7 @@ import { MediaAsset, MediaCategory } from '../../shared/models/content.models';
     .media-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: .75rem; }
     .media-card div:not(.actions) { display: grid; gap: .25rem; }
     .media-card span, .status { color: var(--muted); }
+    .status.warning { color: var(--warning); font-weight: 900; }
     .actions { display: flex; gap: .4rem; }
     .actions button, .actions label { display: grid; width: 2.35rem; height: 2.35rem; place-items: center; border: 1px solid var(--line); border-radius: .65rem; background: var(--surface-strong); color: var(--text); cursor: pointer; }
     .locked { margin-top: 1.5rem; padding: 1rem; border-radius: 1rem; }
@@ -90,6 +95,10 @@ export class MediaLibraryComponent {
   });
 
   async upload(event: Event): Promise<void> {
+    if (!this.github.isConfigured()) {
+      this.github.status.set('GitHub CMS is not configured on this browser. Open Settings first.');
+      return;
+    }
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
     await Promise.all(files.map((file) => this.github.uploadImage(file, this.category())));

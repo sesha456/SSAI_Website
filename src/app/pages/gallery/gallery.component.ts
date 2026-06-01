@@ -21,8 +21,8 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
         <p class="section-copy">Browse event collections, auto-scrolling carousels, and responsive photo grids.</p>
         @if (officer.canManage('galleries')) {
           <div class="admin-bar glass">
-            <span>{{ content.saveMessage() || 'Gallery management enabled' }}</span>
-            <button class="primary-btn" type="button" (click)="openAdd()">Add Gallery</button>
+            <span>{{ galleryAdminMessage() }}</span>
+            <button class="primary-btn" type="button" (click)="openAdd()" [disabled]="!github.isConfigured()">Add Gallery</button>
           </div>
         }
         <div class="gallery-cards top-gap">
@@ -37,14 +37,14 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <div class="card-actions">
                   <button class="primary-btn" type="button" (click)="openGallery(gallery)">Open Gallery</button>
                   @if (officer.canManage('galleries')) {
-                    <button class="ghost-btn" type="button" (click)="openGallery(gallery, true)">Upload Photos</button>
+                    <button class="ghost-btn" type="button" (click)="openGallery(gallery, true)" [disabled]="!github.isConfigured()">Upload Photos</button>
                   }
                 </div>
               </div>
               @if (officer.canManage('galleries')) {
                 <div class="manage-actions">
-                  <button type="button" (click)="openEdit(gallery)" aria-label="Edit gallery"><mat-icon>edit</mat-icon></button>
-                  <button type="button" (click)="content.deleteGallery(gallery.id)" aria-label="Delete gallery"><mat-icon>delete</mat-icon></button>
+                  <button type="button" (click)="openEdit(gallery)" [disabled]="!github.isConfigured()" aria-label="Edit gallery"><mat-icon>edit</mat-icon></button>
+                  <button type="button" (click)="deleteGallery(gallery.id)" [disabled]="!github.isConfigured()" aria-label="Delete gallery"><mat-icon>delete</mat-icon></button>
                 </div>
               }
             </article>
@@ -66,12 +66,15 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
 
           @if (officer.canManage('galleries')) {
             <div class="upload-panel glass">
+              @if (!github.isConfigured()) {
+                <strong class="upload-message warning">GitHub CMS is not configured on this browser. Go to Settings and save GitHub CMS storage before uploading.</strong>
+              }
               <label class="upload-box">
                 <mat-icon>upload</mat-icon>
                 <span>Upload single or multiple photos</span>
                 <input #photoUpload type="file" accept="image/png,image/jpeg,image/jpg,image/webp" multiple (change)="uploadPhotos(gallery, $event)">
               </label>
-              <button class="primary-btn" type="button" (click)="photoUpload.click()" [disabled]="uploading()">
+              <button class="primary-btn" type="button" (click)="photoUpload.click()" [disabled]="uploading() || !github.isConfigured()">
                 {{ uploading() ? 'Uploading Photos...' : 'Choose Photos From Computer' }}
               </button>
               @if (uploadMessage()) {
@@ -124,7 +127,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
             <label class="upload-box compact">
               <mat-icon>add_photo_alternate</mat-icon>
               <span>Choose cover photo from computer</span>
-              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" (change)="uploadCover($event)">
+              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" (change)="uploadCover($event)" [disabled]="!github.isConfigured()">
             </label>
           </div>
           <mat-form-field appearance="outline"><mat-label>Description</mat-label><textarea matInput rows="4" formControlName="description"></textarea></mat-form-field>
@@ -169,7 +172,8 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
     .cover-upload > span { color: var(--muted); font-size: .85rem; font-weight: 800; }
     .cover-preview { min-height: 11rem; border: 1px solid var(--line); border-radius: .8rem; }
     .upload-message { color: var(--primary); }
-    .primary-btn:disabled { cursor: wait; opacity: .72; transform: none; }
+    .upload-message.warning { color: var(--warning); }
+    button:disabled { cursor: not-allowed; opacity: .58; transform: none; }
     .carousel { display: grid; grid-template-columns: auto 1fr auto; gap: .8rem; align-items: center; padding: 1rem; }
     .carousel img { width: 100%; max-height: 62vh; object-fit: contain; border-radius: .8rem; cursor: zoom-in; }
     .photo-card { display: grid; gap: .7rem; padding: .8rem; }
@@ -225,21 +229,21 @@ export class GalleryComponent {
   }
 
   openAdd(): void {
-    if (!this.officer.canManage('galleries')) return;
+    if (!this.officer.canManage('galleries') || !this.ensureSharedCms()) return;
     this.editingId.set(null);
     this.form.reset({ coverImage: 'linear-gradient(135deg, #45f0d1, #2563eb)' });
     this.editorOpen.set(true);
   }
 
   openEdit(gallery: GalleryCollection): void {
-    if (!this.officer.canManage('galleries')) return;
+    if (!this.officer.canManage('galleries') || !this.ensureSharedCms()) return;
     this.editingId.set(gallery.id);
     this.form.setValue({ title: gallery.title, eventDate: gallery.eventDate, coverImage: gallery.coverImage, description: gallery.description });
     this.editorOpen.set(true);
   }
 
   saveGallery(): void {
-    if (!this.officer.canManage('galleries') || this.form.invalid) {
+    if (!this.officer.canManage('galleries') || !this.ensureSharedCms() || this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -250,8 +254,14 @@ export class GalleryComponent {
     this.editorOpen.set(false);
   }
 
+  deleteGallery(id: number): void {
+    if (!this.officer.canManage('galleries') || !this.ensureSharedCms()) return;
+    this.content.deleteGallery(id);
+  }
+
   async uploadPhotos(gallery: GalleryCollection, event: Event): Promise<void> {
     if (!this.officer.requireActiveSession()) return;
+    if (!this.ensureSharedCms()) return;
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
     if (!files.length) return;
@@ -290,6 +300,7 @@ export class GalleryComponent {
   }
 
   async uploadCover(event: Event): Promise<void> {
+    if (!this.ensureSharedCms()) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
@@ -318,6 +329,20 @@ export class GalleryComponent {
 
   imageBackground(value: string): string {
     return /^https?:\/\//.test(value) || value.startsWith('/assets/') || value.startsWith('data:') ? `linear-gradient(0deg, rgba(4,17,29,.45), rgba(4,17,29,.05)), url("${value}") center/cover` : value;
+  }
+
+  galleryAdminMessage(): string {
+    if (!this.github.isConfigured()) {
+      return 'GitHub CMS is not configured on this browser. Changes will not sync across devices.';
+    }
+    return this.content.saveMessage() || 'Gallery management enabled with GitHub CMS sync.';
+  }
+
+  private ensureSharedCms(): boolean {
+    if (this.github.isConfigured()) return true;
+    this.uploadMessage.set('GitHub CMS is not configured on this browser. Open Settings and save GitHub CMS storage first.');
+    this.content.saveMessage.set('GitHub CMS is not configured on this browser. Open Settings and save GitHub CMS storage first.');
+    return false;
   }
 
   private refreshActiveGallery(id: number): void {

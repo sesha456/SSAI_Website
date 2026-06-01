@@ -25,7 +25,7 @@ import { SiteSettings, ThemeId, ThemeService } from '../../core/services/theme.s
             <mat-form-field appearance="outline"><mat-label>Carousel Speed (ms)</mat-label><input matInput type="number" formControlName="carouselSpeed"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Homepage / Event Announcements JSON</mat-label><textarea matInput rows="8" formControlName="announcements"></textarea></mat-form-field>
             <h2>GitHub CMS Storage</h2>
-            <p class="hint">Required for permanent image and JSON persistence across browsers and deployments.</p>
+            <p class="hint">Required on each browser/device for permanent image and JSON persistence across browsers and deployments. Without this, edits stay only on the current device.</p>
             <mat-form-field appearance="outline"><mat-label>GitHub Owner</mat-label><input matInput formControlName="githubOwner"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Repository Name</mat-label><input matInput formControlName="githubRepo"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Branch</mat-label><input matInput formControlName="githubBranch"></mat-form-field>
@@ -70,9 +70,9 @@ export class SettingsComponent {
     activeThemePool: [this.current.activeThemePool.join(', ')],
     carouselSpeed: [this.current.carouselSpeed],
     announcements: [JSON.stringify(this.current.announcements, null, 2)],
-    githubOwner: [this.githubCurrent.owner],
-    githubRepo: [this.githubCurrent.repo],
-    githubBranch: [this.githubCurrent.branch],
+    githubOwner: [this.githubCurrent.owner || 'sesha456'],
+    githubRepo: [this.githubCurrent.repo || 'SSAI_Website'],
+    githubBranch: [this.githubCurrent.branch || 'main'],
     githubToken: [this.githubCurrent.token]
   });
 
