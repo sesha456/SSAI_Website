@@ -5,7 +5,7 @@ import { GitHubCmsService } from './github-cms.service';
 @Injectable({ providedIn: 'root' })
 export class ContentService {
   private readonly github = inject(GitHubCmsService);
-  private readonly editableResetVersion = '2026-05-31-gallery-upload-reset';
+  private readonly editableResetVersion = '2026-06-01-server-cms-reset';
   private readonly editableResetKey = 'ssai-editable-content-reset-version';
   private readonly editableStorageKey = 'ssai-editable-content';
   readonly version = signal(0);
@@ -510,11 +510,23 @@ export class ContentService {
 
   private async fetchJson<T>(url: string): Promise<T | null> {
     try {
-      const response = await fetch(url);
-      return response.ok ? await response.json() as T : null;
+      const response = await fetch(this.liveContentUrl(url), { cache: 'no-store' });
+      if (response.ok) return await response.json() as T;
+      const fallback = await fetch(url, { cache: 'no-store' });
+      return fallback.ok ? await fallback.json() as T : null;
     } catch {
-      return null;
+      try {
+        const fallback = await fetch(url, { cache: 'no-store' });
+        return fallback.ok ? await fallback.json() as T : null;
+      } catch {
+        return null;
+      }
     }
+  }
+
+  private liveContentUrl(url: string): string {
+    if (!url.startsWith('/assets/data/')) return url;
+    return `https://raw.githubusercontent.com/sesha456/SSAI_Website/main/public${url}?t=${Date.now()}`;
   }
 
   private nextId(items: Array<{ id: number }>): number {
