@@ -19,10 +19,10 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
         <span class="eyebrow">Gallery</span>
         <h1 class="section-title">Event-based SSAI galleries.</h1>
         <p class="section-copy">Browse event collections, auto-scrolling carousels, and responsive photo grids.</p>
-        @if (officer.canManage('galleries')) {
+        @if (canManageGalleries()) {
           <div class="admin-bar glass">
             <span>{{ galleryAdminMessage() }}</span>
-            <button class="primary-btn" type="button" (click)="openAdd()" [disabled]="!github.isConfigured()">Add Gallery</button>
+            <button class="primary-btn" type="button" (click)="openAdd()">Add Gallery</button>
           </div>
         }
         <div class="gallery-cards top-gap">
@@ -36,15 +36,15 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <strong>{{ photosFor(gallery).length }} photos</strong>
                 <div class="card-actions">
                   <button class="primary-btn" type="button" (click)="openGallery(gallery)">Open Gallery</button>
-                  @if (officer.canManage('galleries')) {
-                    <button class="ghost-btn" type="button" (click)="openGallery(gallery, true)" [disabled]="!github.isConfigured()">Upload Photos</button>
+                  @if (canManageGalleries()) {
+                    <button class="ghost-btn" type="button" (click)="openGallery(gallery, true)">Upload Photos</button>
                   }
                 </div>
               </div>
-              @if (officer.canManage('galleries')) {
+              @if (canManageGalleries()) {
                 <div class="manage-actions">
-                  <button type="button" (click)="openEdit(gallery)" [disabled]="!github.isConfigured()" aria-label="Edit gallery"><mat-icon>edit</mat-icon></button>
-                  <button type="button" (click)="deleteGallery(gallery.id)" [disabled]="!github.isConfigured()" aria-label="Delete gallery"><mat-icon>delete</mat-icon></button>
+                  <button type="button" (click)="openEdit(gallery)" aria-label="Edit gallery"><mat-icon>edit</mat-icon></button>
+                  <button type="button" (click)="deleteGallery(gallery.id)" aria-label="Delete gallery"><mat-icon>delete</mat-icon></button>
                 </div>
               }
             </article>
@@ -64,17 +64,14 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
             <button class="ghost-btn" type="button" (click)="activeGallery.set(null)">Close Gallery</button>
           </div>
 
-          @if (officer.canManage('galleries')) {
+          @if (canManageGalleries()) {
             <div class="upload-panel glass">
-              @if (!github.isConfigured()) {
-                <strong class="upload-message warning">GitHub CMS is not configured on this browser. Go to Settings and save GitHub CMS storage before uploading.</strong>
-              }
               <label class="upload-box">
                 <mat-icon>upload</mat-icon>
                 <span>Upload single or multiple photos</span>
                 <input #photoUpload type="file" accept="image/png,image/jpeg,image/jpg,image/webp" multiple (change)="uploadPhotos(gallery, $event)">
               </label>
-              <button class="primary-btn" type="button" (click)="photoUpload.click()" [disabled]="uploading() || !github.isConfigured()">
+              <button class="primary-btn" type="button" (click)="photoUpload.click()" [disabled]="uploading()">
                 {{ uploading() ? 'Uploading Photos...' : 'Choose Photos From Computer' }}
               </button>
               @if (uploadMessage()) {
@@ -95,7 +92,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <article class="photo-card glass">
                   <img [src]="photo.image" [alt]="photo.title" (click)="lightboxPhoto.set(photo)">
                   <strong>{{ photo.title }}</strong>
-                  @if (officer.canManage('galleries')) {
+                  @if (canManageGalleries()) {
                     <div class="photo-actions">
                       <button type="button" (click)="content.moveGalleryPhoto(gallery.id, i, -1)"><mat-icon>arrow_upward</mat-icon></button>
                       <button type="button" (click)="content.moveGalleryPhoto(gallery.id, i, 1)"><mat-icon>arrow_downward</mat-icon></button>
@@ -331,10 +328,11 @@ export class GalleryComponent {
     return /^https?:\/\//.test(value) || value.startsWith('/assets/') || value.startsWith('data:') ? `linear-gradient(0deg, rgba(4,17,29,.45), rgba(4,17,29,.05)), url("${value}") center/cover` : value;
   }
 
+  canManageGalleries(): boolean {
+    return this.officer.canManage('galleries') && this.github.isConfigured();
+  }
+
   galleryAdminMessage(): string {
-    if (!this.github.isConfigured()) {
-      return 'GitHub CMS is not configured on this browser. Changes will not sync across devices.';
-    }
     return this.content.saveMessage() || 'Gallery management enabled with GitHub CMS sync.';
   }
 
