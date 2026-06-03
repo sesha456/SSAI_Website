@@ -8,6 +8,8 @@ const MONTH_FORMATTER = new Intl.DateTimeFormat('en-US', {
 export interface OrganizationAgeInfo {
   foundedLabel: string;
   ageLabel: string;
+  statValue: string;
+  statUnit: string;
 }
 
 export function organizationAgeInfo(currentDate = new Date()): OrganizationAgeInfo {
@@ -18,9 +20,12 @@ export function organizationAgeInfo(currentDate = new Date()): OrganizationAgeIn
   };
   const elapsedMonths = Math.max(0, (current.year - founding.year) * 12 + current.month - founding.month);
 
+  const age = formatElapsedMonths(elapsedMonths);
   return {
     foundedLabel: MONTH_FORMATTER.format(new Date(founding.year, founding.month - 1, 1)),
-    ageLabel: formatElapsedMonths(elapsedMonths)
+    ageLabel: age.label,
+    statValue: age.value,
+    statUnit: age.unit
   };
 }
 
@@ -32,23 +37,24 @@ function parseYearMonth(value: string): { year: number; month: number } {
   return { year, month };
 }
 
-function formatElapsedMonths(totalMonths: number): string {
+function formatElapsedMonths(totalMonths: number): { label: string; value: string; unit: string } {
   if (totalMonths === 0) {
-    return 'Founded this month';
+    return { label: 'Founded this month', value: 'New', unit: 'this month' };
   }
 
   if (totalMonths < 12) {
-    return `${totalMonths} ${pluralize('month', totalMonths)} old`;
+    const unit = `${pluralize('month', totalMonths)} old`;
+    return { label: `${totalMonths} ${unit}`, value: String(totalMonths), unit };
   }
 
   const years = Math.floor(totalMonths / 12);
   const months = totalMonths % 12;
   const yearPart = `${years} ${pluralize('year', years)}`;
   const monthPart = months ? `, ${months} ${pluralize('month', months)}` : '';
-  return `${yearPart}${monthPart} old`;
+  const unit = months ? `${pluralize('year', years)}, ${months} ${pluralize('month', months)} old` : `${pluralize('year', years)} old`;
+  return { label: `${yearPart}${monthPart} old`, value: String(years), unit };
 }
 
 function pluralize(value: string, count: number): string {
   return count === 1 ? value : `${value}s`;
 }
-

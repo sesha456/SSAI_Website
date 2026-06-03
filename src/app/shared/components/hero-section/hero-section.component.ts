@@ -25,7 +25,11 @@ import { organizationAgeInfo } from '../../../core/utils/organization-age';
         </div>
       </div>
       <div class="hero__panel glass" aria-label="AI innovation metrics">
-        <div><strong>{{ age.ageLabel }}</strong><span>Founded: {{ age.foundedLabel }}</span></div>
+        <div class="metric metric--age">
+          <strong>{{ age.statValue }}</strong>
+          <span class="metric__unit">{{ age.statUnit }}</span>
+          <small>Founded {{ age.foundedLabel }}</small>
+        </div>
         <div><strong>50+</strong><span>members</span></div>
         <div><strong>1</strong><span>annual conference</span></div>
       </div>

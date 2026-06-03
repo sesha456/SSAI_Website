@@ -59,21 +59,46 @@ p {
   width: min(820px, 100%);
   margin-top: 3rem;
   border-radius: 1rem;
+  align-items: stretch;
 }
 
 .hero__panel div {
-  padding: 1.1rem;
+  display: grid;
+  min-height: 7.2rem;
+  align-content: center;
+  justify-items: center;
+  padding: 1rem 1.15rem;
   text-align: center;
 }
 
 .hero__panel strong {
   display: block;
-  font-size: clamp(1.45rem, 4vw, 2.6rem);
+  font-size: clamp(2rem, 5vw, 2.65rem);
+  line-height: .95;
+  letter-spacing: 0;
 }
 
 .hero__panel span {
   color: var(--muted);
+  font-size: .95rem;
   font-weight: 700;
+  line-height: 1.35;
+}
+
+.metric--age {
+  gap: .25rem;
+}
+
+.metric__unit {
+  margin-top: .1rem;
+}
+
+.hero__panel small {
+  margin-top: .2rem;
+  color: color-mix(in srgb, var(--muted), var(--text) 12%);
+  font-size: .82rem;
+  font-weight: 800;
+  line-height: 1.35;
 }
 
 .particles span {
