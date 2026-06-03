@@ -19,7 +19,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
         <span class="eyebrow">Gallery</span>
         <h1 class="section-title">Event-based SSAI galleries.</h1>
         <p class="section-copy">Browse event collections, auto-scrolling carousels, and responsive photo grids.</p>
-        @if (canManageGalleries()) {
+        @if (canManageGalleryMetadata()) {
           <div class="admin-bar glass">
             <span>{{ galleryAdminMessage() }}</span>
             <button class="primary-btn" type="button" (click)="openAdd()">Add Gallery</button>
@@ -36,12 +36,12 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <strong>{{ photosFor(gallery).length }} photos</strong>
                 <div class="card-actions">
                   <button class="primary-btn" type="button" (click)="openGallery(gallery)">Open Gallery</button>
-                  @if (canManageGalleries()) {
+                  @if (canUploadGalleryMedia()) {
                     <button class="ghost-btn" type="button" (click)="openGallery(gallery, true)">Upload Photos</button>
                   }
                 </div>
               </div>
-              @if (canManageGalleries()) {
+              @if (canManageGalleryMetadata()) {
                 <div class="manage-actions">
                   <button type="button" (click)="openEdit(gallery)" aria-label="Edit gallery"><mat-icon>edit</mat-icon></button>
                   <button type="button" (click)="deleteGallery(gallery.id)" aria-label="Delete gallery"><mat-icon>delete</mat-icon></button>
@@ -64,7 +64,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
             <button class="ghost-btn" type="button" (click)="activeGallery.set(null)">Close Gallery</button>
           </div>
 
-          @if (canManageGalleries()) {
+          @if (canUploadGalleryMedia()) {
             <div class="upload-panel glass">
               <label class="upload-box">
                 <mat-icon>upload</mat-icon>
@@ -92,7 +92,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <article class="photo-card glass">
                   <img [src]="photo.image" [alt]="photo.title" (click)="lightboxPhoto.set(photo)">
                   <strong>{{ photo.title }}</strong>
-                  @if (canManageGalleries()) {
+                  @if (canManageGalleryMetadata()) {
                     <div class="photo-actions">
                       <button type="button" (click)="content.moveGalleryPhoto(gallery.id, i, -1)"><mat-icon>arrow_upward</mat-icon></button>
                       <button type="button" (click)="content.moveGalleryPhoto(gallery.id, i, 1)"><mat-icon>arrow_downward</mat-icon></button>
@@ -219,28 +219,28 @@ export class GalleryComponent {
     this.carouselIndex.set(0);
     setTimeout(() => {
       document.getElementById('gallery-management')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      if (upload && this.officer.canManage('galleries')) {
+      if (upload && this.canUploadGalleryMedia()) {
         document.querySelector<HTMLElement>('#gallery-management .upload-box')?.focus();
       }
     });
   }
 
   openAdd(): void {
-    if (!this.officer.canManage('galleries') || !this.ensureSharedCms()) return;
+    if (!this.canManageGalleryMetadata()) return;
     this.editingId.set(null);
     this.form.reset({ coverImage: 'linear-gradient(135deg, #45f0d1, #2563eb)' });
     this.editorOpen.set(true);
   }
 
   openEdit(gallery: GalleryCollection): void {
-    if (!this.officer.canManage('galleries') || !this.ensureSharedCms()) return;
+    if (!this.canManageGalleryMetadata()) return;
     this.editingId.set(gallery.id);
     this.form.setValue({ title: gallery.title, eventDate: gallery.eventDate, coverImage: gallery.coverImage, description: gallery.description });
     this.editorOpen.set(true);
   }
 
   saveGallery(): void {
-    if (!this.officer.canManage('galleries') || !this.ensureSharedCms() || this.form.invalid) {
+    if (!this.canManageGalleryMetadata() || this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -252,7 +252,7 @@ export class GalleryComponent {
   }
 
   deleteGallery(id: number): void {
-    if (!this.officer.canManage('galleries') || !this.ensureSharedCms()) return;
+    if (!this.canManageGalleryMetadata()) return;
     this.content.deleteGallery(id);
   }
 
@@ -328,11 +328,18 @@ export class GalleryComponent {
     return /^https?:\/\//.test(value) || value.startsWith('/assets/') || value.startsWith('data:') ? `linear-gradient(0deg, rgba(4,17,29,.45), rgba(4,17,29,.05)), url("${value}") center/cover` : value;
   }
 
-  canManageGalleries(): boolean {
-    return this.officer.canManage('galleries') && this.github.isConfigured();
+  canManageGalleryMetadata(): boolean {
+    return this.officer.canManage('galleries');
+  }
+
+  canUploadGalleryMedia(): boolean {
+    return this.canManageGalleryMetadata() && this.github.isConfigured();
   }
 
   galleryAdminMessage(): string {
+    if (!this.github.isConfigured()) {
+      return this.content.saveMessage() || 'Gallery management enabled. Configure GitHub CMS to upload photos.';
+    }
     return this.content.saveMessage() || 'Gallery management enabled with GitHub CMS sync.';
   }
 
