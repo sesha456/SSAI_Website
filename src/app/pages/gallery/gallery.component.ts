@@ -36,7 +36,7 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
                 <strong>{{ photosFor(gallery).length }} photos</strong>
                 <div class="card-actions">
                   <button class="primary-btn" type="button" (click)="openGallery(gallery)">Open Gallery</button>
-                  @if (canUploadGalleryMedia()) {
+                  @if (canManageGalleryMetadata()) {
                     <button class="ghost-btn" type="button" (click)="openGallery(gallery, true)">Upload Photos</button>
                   }
                 </div>
@@ -64,8 +64,11 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
             <button class="ghost-btn" type="button" (click)="activeGallery.set(null)">Close Gallery</button>
           </div>
 
-          @if (canUploadGalleryMedia()) {
+          @if (canManageGalleryMetadata()) {
             <div class="upload-panel glass">
+              @if (!github.isConfigured()) {
+                <strong class="upload-message warning">GitHub CMS repository settings are missing. Open Settings before uploading.</strong>
+              }
               <label class="upload-box">
                 <mat-icon>upload</mat-icon>
                 <span>Upload single or multiple photos</span>
@@ -219,7 +222,7 @@ export class GalleryComponent {
     this.carouselIndex.set(0);
     setTimeout(() => {
       document.getElementById('gallery-management')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      if (upload && this.canUploadGalleryMedia()) {
+      if (upload && this.canManageGalleryMetadata()) {
         document.querySelector<HTMLElement>('#gallery-management .upload-box')?.focus();
       }
     });
@@ -332,21 +335,17 @@ export class GalleryComponent {
     return this.officer.canManage('galleries');
   }
 
-  canUploadGalleryMedia(): boolean {
-    return this.canManageGalleryMetadata() && this.github.isConfigured();
-  }
-
   galleryAdminMessage(): string {
     if (!this.github.isConfigured()) {
-      return this.content.saveMessage() || 'Gallery management enabled. Configure GitHub CMS to upload photos.';
+      return this.content.saveMessage() || 'Gallery management enabled. Open Settings if uploads cannot reach GitHub.';
     }
     return this.content.saveMessage() || 'Gallery management enabled with GitHub CMS sync.';
   }
 
   private ensureSharedCms(): boolean {
     if (this.github.isConfigured()) return true;
-    this.uploadMessage.set('GitHub CMS is not configured on this browser. Open Settings and save GitHub CMS storage first.');
-    this.content.saveMessage.set('GitHub CMS is not configured on this browser. Open Settings and save GitHub CMS storage first.');
+    this.uploadMessage.set('GitHub CMS repository settings are missing. Open Settings and save GitHub CMS storage first.');
+    this.content.saveMessage.set('GitHub CMS repository settings are missing. Open Settings and save GitHub CMS storage first.');
     return false;
   }
 

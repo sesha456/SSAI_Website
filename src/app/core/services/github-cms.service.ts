@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { environment } from '../../../environments/environment';
 import { MediaAsset, MediaCategory } from '../../shared/models/content.models';
 
 export interface GitHubCmsSettings {
@@ -21,7 +22,7 @@ export class GitHubCmsService {
 
   isConfigured(): boolean {
     const settings = this.settings();
-    return !!settings.owner && !!settings.repo && !!settings.branch && !!settings.token;
+    return !!settings.owner && !!settings.repo && !!settings.branch;
   }
 
   saveSettings(settings: GitHubCmsSettings): void {
@@ -38,7 +39,7 @@ export class GitHubCmsService {
   async uploadImage(file: File, category: MediaCategory, metadata: Pick<MediaAsset, 'galleryId'> = {}): Promise<MediaAsset> {
     const uploadFile = await this.prepareImageForUpload(file);
     if (!this.isConfigured()) {
-      throw new Error('GitHub CMS is not configured. Save a GitHub token in Settings first.');
+      throw new Error('GitHub CMS is not configured. Save GitHub CMS settings first.');
     }
 
     const safeName = this.safeFileName(uploadFile.name);
@@ -128,8 +129,24 @@ export class GitHubCmsService {
 
   private async request(path: string, init: RequestInit): Promise<unknown> {
     const { owner, repo, branch, token } = this.settings();
+    const response = token
+      ? await this.githubRequest(path, init)
+      : await fetch(environment.githubCms.apiPath, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner, repo, branch, path, init })
+      });
+    if (!response.ok) {
+      const message = await response.text().catch(() => '');
+      throw new Error(message || `GitHub request failed: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  private githubRequest(path: string, init: RequestInit): Promise<Response> {
+    const { owner, repo, branch, token } = this.settings();
     const separator = path.includes('?') ? '&' : '?';
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}${separator}ref=${encodeURIComponent(branch)}`, {
+    return fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}${separator}ref=${encodeURIComponent(branch)}`, {
       ...init,
       headers: {
         Accept: 'application/vnd.github+json',
@@ -139,10 +156,6 @@ export class GitHubCmsService {
         ...(init.headers ?? {})
       }
     });
-    if (!response.ok) {
-      throw new Error(`GitHub request failed: ${response.status}`);
-    }
-    return response.json();
   }
 
   private recordAsset(asset: MediaAsset): MediaAsset {
@@ -153,9 +166,9 @@ export class GitHubCmsService {
 
   private readSettings(): GitHubCmsSettings {
     try {
-      return { owner: '', repo: '', branch: 'main', token: '', ...JSON.parse(localStorage.getItem(this.settingsKey) || '{}') };
+      return { owner: environment.githubCms.owner, repo: environment.githubCms.repo, branch: environment.githubCms.branch, token: '', ...JSON.parse(localStorage.getItem(this.settingsKey) || '{}') };
     } catch {
-      return { owner: '', repo: '', branch: 'main', token: '' };
+      return { owner: environment.githubCms.owner, repo: environment.githubCms.repo, branch: environment.githubCms.branch, token: '' };
     }
   }
 

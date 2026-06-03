@@ -482,6 +482,30 @@ svg {
 .mat-mdc-form-field {
   width: 100%;
   max-width: 100%;
+  --mdc-outlined-text-field-input-text-color: var(--text);
+  --mdc-outlined-text-field-label-text-color: color-mix(in srgb, var(--text), transparent 18%);
+  --mdc-outlined-text-field-hover-label-text-color: var(--text);
+  --mdc-outlined-text-field-focus-label-text-color: var(--primary);
+  --mdc-outlined-text-field-outline-color: color-mix(in srgb, var(--text), transparent 34%);
+  --mdc-outlined-text-field-hover-outline-color: color-mix(in srgb, var(--primary), var(--text) 18%);
+  --mdc-outlined-text-field-focus-outline-color: var(--primary);
+  --mat-form-field-state-layer-color: transparent;
+  --mat-select-enabled-trigger-text-color: var(--text);
+  --mat-select-enabled-arrow-color: color-mix(in srgb, var(--text), transparent 20%);
+  --mat-select-focused-arrow-color: var(--primary);
+  --mat-select-placeholder-text-color: color-mix(in srgb, var(--text), transparent 35%);
+}
+
+.mat-mdc-input-element,
+.mat-mdc-select-value {
+  color: var(--text) !important;
+  caret-color: var(--primary);
+  -webkit-text-fill-color: var(--text);
+}
+
+.mat-mdc-input-element::placeholder {
+  color: color-mix(in srgb, var(--text), transparent 35%) !important;
+  -webkit-text-fill-color: color-mix(in srgb, var(--text), transparent 35%);
 }
 
 .reveal {
