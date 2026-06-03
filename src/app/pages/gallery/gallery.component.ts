@@ -127,8 +127,11 @@ import { GalleryCollection, GalleryPhoto } from '../../shared/models/content.mod
             <label class="upload-box compact">
               <mat-icon>add_photo_alternate</mat-icon>
               <span>Choose cover photo from computer</span>
-              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" (change)="uploadCover($event)" [disabled]="!github.isConfigured()">
+              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" (change)="uploadCover($event)">
             </label>
+            @if (uploadMessage()) {
+              <strong class="upload-message">{{ uploadMessage() }}</strong>
+            }
           </div>
           <mat-form-field appearance="outline"><mat-label>Description</mat-label><textarea matInput rows="4" formControlName="description"></textarea></mat-form-field>
           <div class="editor-actions">
@@ -231,6 +234,7 @@ export class GalleryComponent {
   openAdd(): void {
     if (!this.canManageGalleryMetadata()) return;
     this.editingId.set(null);
+    this.uploadMessage.set('');
     this.form.reset({ coverImage: 'linear-gradient(135deg, #45f0d1, #2563eb)' });
     this.editorOpen.set(true);
   }
@@ -238,6 +242,7 @@ export class GalleryComponent {
   openEdit(gallery: GalleryCollection): void {
     if (!this.canManageGalleryMetadata()) return;
     this.editingId.set(gallery.id);
+    this.uploadMessage.set('');
     this.form.setValue({ title: gallery.title, eventDate: gallery.eventDate, coverImage: gallery.coverImage, description: gallery.description });
     this.editorOpen.set(true);
   }
@@ -261,14 +266,14 @@ export class GalleryComponent {
 
   async uploadPhotos(gallery: GalleryCollection, event: Event): Promise<void> {
     if (!this.officer.requireActiveSession()) return;
-    if (!this.ensureSharedCms()) return;
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
     if (!files.length) return;
     this.uploading.set(true);
-    this.uploadMessage.set(`Uploading 0 of ${files.length} photos...`);
+    this.uploadMessage.set(`Preparing 0 of ${files.length} photos...`);
     let uploaded = 0;
     let failed = 0;
+    let localOnly = 0;
 
     for (const [index, file] of files.entries()) {
       if (!this.officer.requireActiveSession()) {
@@ -277,11 +282,12 @@ export class GalleryComponent {
       }
 
       try {
-        this.uploadMessage.set(`Optimizing and uploading ${index + 1} of ${files.length} photos...`);
-        const asset = await this.github.uploadImage(file, 'gallery', { galleryId: gallery.id });
-        const photo = { title: this.photoTitle(file, index), image: asset.url };
+        this.uploadMessage.set(`Preparing ${index + 1} of ${files.length} photos...`);
+        const image = await this.uploadImageOrLocal(file, 'gallery', { galleryId: gallery.id }, 1400);
+        const photo = { title: this.photoTitle(file, index), image: image.url };
         this.content.addGalleryPhotos(gallery.id, [photo]);
         uploaded += 1;
+        if (image.localOnly) localOnly += 1;
         this.refreshActiveGallery(gallery.id);
         const active = this.activeGallery();
         const activePhotos = active ? this.photosFor(active) : [];
@@ -294,18 +300,25 @@ export class GalleryComponent {
 
     this.uploading.set(false);
     this.uploadMessage.set(uploaded
-      ? `${uploaded} of ${files.length} photo${files.length === 1 ? '' : 's'} uploaded${failed ? `, ${failed} failed` : ''}.`
+      ? `${uploaded} of ${files.length} photo${files.length === 1 ? '' : 's'} added${localOnly ? ` (${localOnly} saved locally)` : ' and synced to GitHub'}${failed ? `, ${failed} failed` : ''}.`
       : 'Upload failed. Please try fewer photos or smaller image files.');
     input.value = '';
   }
 
   async uploadCover(event: Event): Promise<void> {
-    if (!this.ensureSharedCms()) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    this.form.controls.coverImage.setValue((await this.github.uploadImage(file, 'gallery')).url);
-    input.value = '';
+    this.uploadMessage.set('Preparing cover photo...');
+    try {
+      const image = await this.uploadImageOrLocal(file, 'gallery', {}, 1400);
+      this.form.controls.coverImage.setValue(image.url);
+      this.uploadMessage.set(image.localOnly ? 'Cover photo added locally. Save the gallery to keep it on this browser.' : 'Cover photo uploaded to GitHub.');
+      input.value = '';
+    } catch (error) {
+      console.error('Gallery cover upload failed', error);
+      this.uploadMessage.set('Cover photo failed. Please try a smaller image file.');
+    }
   }
 
   nextPhoto(gallery: GalleryCollection): void {
@@ -347,6 +360,61 @@ export class GalleryComponent {
     this.uploadMessage.set('GitHub CMS repository settings are missing. Open Settings and save GitHub CMS storage first.');
     this.content.saveMessage.set('GitHub CMS repository settings are missing. Open Settings and save GitHub CMS storage first.');
     return false;
+  }
+
+  private async uploadImageOrLocal(
+    file: File,
+    category: 'gallery',
+    metadata: Pick<GalleryPhoto & { galleryId?: number }, 'galleryId'> = {},
+    maxDimension = 1400
+  ): Promise<{ url: string; localOnly: boolean }> {
+    if (this.github.isConfigured()) {
+      try {
+        const asset = await this.github.uploadImage(file, category, metadata);
+        return { url: asset.url, localOnly: false };
+      } catch (error) {
+        console.warn('GitHub CMS upload unavailable; saving image locally.', error);
+      }
+    }
+
+    return { url: await this.localImageDataUrl(file, maxDimension), localOnly: true };
+  }
+
+  private async localImageDataUrl(file: File, maxDimension: number): Promise<string> {
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Only image files can be uploaded.');
+    }
+
+    const source = await this.readAsDataUrl(file);
+    const image = await this.loadImage(source);
+    const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    if (!context) return source;
+    context.drawImage(image, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', 0.76);
+  }
+
+  private loadImage(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('Unable to read image file.'));
+      image.src = src;
+    });
+  }
+
+  private readAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
   }
 
   private refreshActiveGallery(id: number): void {
