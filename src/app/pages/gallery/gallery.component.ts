@@ -283,9 +283,9 @@ export class GalleryComponent {
 
       try {
         this.uploadMessage.set(`Preparing ${index + 1} of ${files.length} photos...`);
-        const image = await this.uploadImageOrLocal(file, 'gallery', { galleryId: gallery.id }, 1400);
+        const image = await this.uploadImageOrLocal(file, 'gallery', { galleryId: gallery.id }, 720, 260_000);
         const photo = { title: this.photoTitle(file, index), image: image.url };
-        this.content.addGalleryPhotos(gallery.id, [photo]);
+        this.addPhotoToGallery(gallery.id, photo, image.localOnly);
         uploaded += 1;
         if (image.localOnly) localOnly += 1;
         this.refreshActiveGallery(gallery.id);
@@ -311,7 +311,7 @@ export class GalleryComponent {
     if (!file) return;
     this.uploadMessage.set('Preparing cover photo...');
     try {
-      const image = await this.uploadImageOrLocal(file, 'gallery', {}, 1400);
+      const image = await this.uploadImageOrLocal(file, 'gallery', {}, 900, 360_000);
       this.form.controls.coverImage.setValue(image.url);
       this.uploadMessage.set(image.localOnly ? 'Cover photo added locally. Save the gallery to keep it on this browser.' : 'Cover photo uploaded to GitHub.');
       input.value = '';
@@ -366,7 +366,8 @@ export class GalleryComponent {
     file: File,
     category: 'gallery',
     metadata: Pick<GalleryPhoto & { galleryId?: number }, 'galleryId'> = {},
-    maxDimension = 1400
+    maxDimension = 900,
+    maxDataUrlLength = 320_000
   ): Promise<{ url: string; localOnly: boolean }> {
     if (this.github.isConfigured()) {
       try {
@@ -377,26 +378,61 @@ export class GalleryComponent {
       }
     }
 
-    return { url: await this.localImageDataUrl(file, maxDimension), localOnly: true };
+    return { url: await this.localImageDataUrl(file, maxDimension, maxDataUrlLength), localOnly: true };
   }
 
-  private async localImageDataUrl(file: File, maxDimension: number): Promise<string> {
+  private addPhotoToGallery(galleryId: number, photo: GalleryPhoto, localOnly: boolean): void {
+    try {
+      this.content.addGalleryPhotos(galleryId, [photo]);
+    } catch (error) {
+      if (!localOnly) {
+        throw error;
+      }
+
+      this.content.galleryCollections = this.content.galleryCollections.map((gallery) =>
+        gallery.id === galleryId ? { ...gallery, photos: [...gallery.photos, photo] } : gallery
+      );
+      this.content.saveMessage.set('Photo added for this session. Browser storage is full, so it may not persist after refresh.');
+      this.content.version.update((value) => value + 1);
+    }
+  }
+
+  private async localImageDataUrl(file: File, maxDimension: number, maxDataUrlLength: number): Promise<string> {
     if (!file.type.startsWith('image/')) {
       throw new Error('Only image files can be uploaded.');
     }
 
     const source = await this.readAsDataUrl(file);
     const image = await this.loadImage(source);
-    const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
-    const width = Math.max(1, Math.round(image.naturalWidth * scale));
-    const height = Math.max(1, Math.round(image.naturalHeight * scale));
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext('2d');
-    if (!context) return source;
-    context.drawImage(image, 0, 0, width, height);
-    return canvas.toDataURL('image/jpeg', 0.76);
+    const dimensions = [maxDimension, 640, 520, 420, 320].filter((value, index, values) => value > 0 && values.indexOf(value) === index);
+    const qualities = [0.64, 0.52, 0.42, 0.34, 0.26];
+    let smallest = source;
+
+    for (const dimension of dimensions) {
+      const scale = Math.min(1, dimension / Math.max(image.naturalWidth, image.naturalHeight));
+      const width = Math.max(1, Math.round(image.naturalWidth * scale));
+      const height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext('2d');
+      if (!context) continue;
+      context.fillStyle = '#06111f';
+      context.fillRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+
+      for (const quality of qualities) {
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        if (dataUrl.length < smallest.length) {
+          smallest = dataUrl;
+        }
+        if (dataUrl.length <= maxDataUrlLength) {
+          return dataUrl;
+        }
+      }
+    }
+
+    return smallest;
   }
 
   private loadImage(src: string): Promise<HTMLImageElement> {
