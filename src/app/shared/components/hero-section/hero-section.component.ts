@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
+import { organizationAgeInfo } from '../../../core/utils/organization-age';
 
 @Component({
   selector: 'app-hero-section',
@@ -24,7 +25,7 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
       </div>
       <div class="hero__panel glass" aria-label="AI innovation metrics">
-        <div><strong>New</strong><span>organization</span></div>
+        <div><strong>{{ age.ageLabel }}</strong><span>Founded: {{ age.foundedLabel }}</span></div>
         <div><strong>50+</strong><span>members</span></div>
         <div><strong>1</strong><span>annual conference</span></div>
       </div>
@@ -33,6 +34,7 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrl: './hero-section.component.scss'
 })
 export class HeroSectionComponent {
+  readonly age = organizationAgeInfo();
   readonly dots = Array.from({ length: 34 }, (_, index) => {
     const i = index + 1;
     return { i, top: (i * 13) % 100, left: (i * 29) % 100 };

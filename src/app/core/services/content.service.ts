@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { EventItem, GalleryCollection, GalleryItem, GalleryPhoto, PastEvent, ProjectItem, SiteContent, StatItem, TeamMember, Testimonial } from '../../shared/models/content.models';
 import { GitHubCmsService } from './github-cms.service';
+import { organizationAgeInfo } from '../utils/organization-age';
 
 @Injectable({ providedIn: 'root' })
 export class ContentService {
@@ -59,11 +60,14 @@ export class ContentService {
     }
   };
 
-  readonly stats: StatItem[] = [
-    { label: 'organization', value: 'New', suffix: '' },
-    { label: 'members', value: 50, suffix: '+' },
-    { label: 'annual conference', value: 1, suffix: '' }
-  ];
+  get stats(): StatItem[] {
+    const age = organizationAgeInfo();
+    return [
+      { label: `Founded: ${age.foundedLabel}`, value: `Age: ${age.ageLabel}`, suffix: '' },
+      { label: 'members', value: 50, suffix: '+' },
+      { label: 'annual conference', value: 1, suffix: '' }
+    ];
+  }
 
   events: EventItem[] = [
     {
