@@ -21,10 +21,10 @@ import { SiteSettings, ThemeId, ThemeService } from '../../core/services/theme.s
           <div class="theme-panel glass">
             <div>
               <span class="eyebrow">Officer Theme Control</span>
-              <h2>UNT Computer Science & Engineering theme</h2>
-              <p class="hint">Apply a UNT-inspired academic visual style based on the provided Computer Science & Engineering and student event page references.</p>
+              <h2>UNT theme</h2>
+              <p class="hint">Apply the UNT-inspired academic visual style based on the provided Computer Science & Engineering and student event page references.</p>
             </div>
-            <button class="primary-btn" type="button" (click)="applyUntTheme()">Apply UNT CSE Theme</button>
+            <button class="primary-btn" type="button" (click)="applyUntTheme()">Apply UNT Theme</button>
           </div>
         }
         @if (officer.session()?.role === 'Super Admin') {

@@ -26,7 +26,7 @@ import { OfficerSessionService } from '../../../core/services/officer-session.se
         @for (link of links; track link.path) {
           @if (!link.permission || canAccessLink(link.permission)) {
             <a
-              [href]="link.path"
+              [routerLink]="link.path"
               [class.active]="isActiveLink(link.path)"
               (click)="navigateTo($event, link.path)"
               [attr.aria-label]="link.label"
@@ -192,7 +192,6 @@ export class NavbarComponent {
   }
 
   navigateTo(event: MouseEvent, path: string): void {
-    event.preventDefault();
     this.closeMobile();
     void this.router.navigateByUrl(path);
   }
