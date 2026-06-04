@@ -4,10 +4,19 @@
     "title": "Clinical Triage Assistant",
     "domain": "Healthcare AI",
     "category": "Healthcare AI",
-    "techStack": ["Python", "Angular", "TensorFlow", "FHIR"],
+    "techStack": [
+      "Python",
+      "Angular",
+      "TensorFlow",
+      "FHIR"
+    ],
     "description": "A decision-support prototype for summarizing patient intake signals and routing cases responsibly.",
     "details": "The project explores explainable triage recommendations, structured clinical data handling, and human-in-the-loop review for safer care workflows.",
-    "contributors": ["Aisha Patel", "Noah Chen", "Maya Rivera"],
+    "contributors": [
+      "Aisha Patel",
+      "Noah Chen",
+      "Maya Rivera"
+    ],
     "github": "https://github.com/",
     "demo": "https://example.com/"
   },
@@ -16,10 +25,18 @@
     "title": "Research Paper RAG Navigator",
     "domain": "RAG Systems",
     "category": "RAG Systems",
-    "techStack": ["LangChain", "TypeScript", "Vector DB", "OpenAI API"],
+    "techStack": [
+      "LangChain",
+      "TypeScript",
+      "Vector DB",
+      "OpenAI API"
+    ],
     "description": "A retrieval system that helps students explore literature, citations, and experiment notes.",
     "details": "Includes citation-aware chunking, source-grounded answers, evaluation rubrics, and a clean interface for research groups.",
-    "contributors": ["Elena Brooks", "Sam Wilson"],
+    "contributors": [
+      "Elena Brooks",
+      "Sam Wilson"
+    ],
     "github": "https://github.com/",
     "demo": "https://example.com/"
   },
@@ -28,10 +45,19 @@
     "title": "Autonomous Lab Rover",
     "domain": "Robotics",
     "category": "Robotics",
-    "techStack": ["ROS2", "OpenCV", "PyTorch", "Jetson"],
+    "techStack": [
+      "ROS2",
+      "OpenCV",
+      "PyTorch",
+      "Jetson"
+    ],
     "description": "A small robotics platform for navigation, object detection, and lab inventory experiments.",
     "details": "The rover combines visual perception with path planning and is designed as a reusable teaching platform for robotics teams.",
-    "contributors": ["Jordan Kim", "Priya Shah", "Luis Gomez"],
+    "contributors": [
+      "Jordan Kim",
+      "Priya Shah",
+      "Luis Gomez"
+    ],
     "github": "https://github.com/",
     "demo": "https://example.com/"
   },
@@ -40,10 +66,17 @@
     "title": "Molecular Candidate Ranker",
     "domain": "Drug Discovery",
     "category": "Drug Discovery",
-    "techStack": ["RDKit", "Graph Neural Nets", "FastAPI"],
+    "techStack": [
+      "RDKit",
+      "Graph Neural Nets",
+      "FastAPI"
+    ],
     "description": "A graph-model experiment for ranking candidate molecules against target properties.",
     "details": "Students compare graph featurization strategies, uncertainty estimates, and screening workflows for early discovery research.",
-    "contributors": ["Nina Rao", "Owen Lee"],
+    "contributors": [
+      "Nina Rao",
+      "Owen Lee"
+    ],
     "github": "https://github.com/",
     "demo": "https://example.com/"
   },
@@ -52,10 +85,17 @@
     "title": "Campus Vision Safety Monitor",
     "domain": "Computer Vision",
     "category": "Computer Vision",
-    "techStack": ["YOLO", "OpenCV", "Edge AI"],
+    "techStack": [
+      "YOLO",
+      "OpenCV",
+      "Edge AI"
+    ],
     "description": "An edge-computing prototype for privacy-preserving occupancy and safety alerts.",
     "details": "The design uses anonymized scene understanding and local inference to explore responsible public-space sensing.",
-    "contributors": ["Fatima Noor", "Ryan Clark"],
+    "contributors": [
+      "Fatima Noor",
+      "Ryan Clark"
+    ],
     "github": "https://github.com/",
     "demo": "https://example.com/"
   },
@@ -64,10 +104,17 @@
     "title": "Multi-Agent Study Planner",
     "domain": "AI Agents",
     "category": "AI Agents",
-    "techStack": ["TypeScript", "Agent Graphs", "Firebase"],
+    "techStack": [
+      "TypeScript",
+      "Agent Graphs",
+      "Firebase"
+    ],
     "description": "A collaborative planning assistant that decomposes coursework goals into adaptive study workflows.",
     "details": "The project tests planning agents, calendar constraints, reflection loops, and student-controlled personalization.",
-    "contributors": ["Grace Hall", "Ibrahim Khan"],
+    "contributors": [
+      "Grace Hall",
+      "Ibrahim Khan"
+    ],
     "github": "https://github.com/",
     "demo": "https://example.com/"
   }
