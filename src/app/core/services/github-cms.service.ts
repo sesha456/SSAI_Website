@@ -2,6 +2,16 @@ import { Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { MediaAsset, MediaCategory } from '../../shared/models/content.models';
 
+class GitHubCmsRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly body: string
+  ) {
+    super(message);
+  }
+}
+
 export interface GitHubCmsSettings {
   owner: string;
   repo: string;
@@ -13,6 +23,7 @@ export class GitHubCmsService {
   private readonly mediaResetVersion = '2026-06-01-server-cms-reset';
   private readonly mediaResetKey = 'ssai-media-library-reset-version';
   private readonly mediaKey = 'ssai-media-library';
+  private readonly writeConflictRetries = 2;
 
   readonly settings = signal<GitHubCmsSettings>(this.readSettings());
   readonly media = signal<MediaAsset[]>(this.readMedia());
@@ -89,16 +100,26 @@ export class GitHubCmsService {
   }
 
   private async putFile(path: string, content: string, message: string): Promise<void> {
-    const existing = await this.getFile(path);
-    await this.request(path, {
-      method: 'PUT',
-      body: JSON.stringify({
-        message,
-        content,
-        branch: this.settings().branch,
-        ...(existing?.sha ? { sha: existing.sha } : {})
-      })
-    });
+    for (let attempt = 0; attempt <= this.writeConflictRetries; attempt += 1) {
+      const existing = await this.getFile(path);
+      try {
+        await this.request(path, {
+          method: 'PUT',
+          body: JSON.stringify({
+            message,
+            content,
+            branch: this.settings().branch,
+            ...(existing?.sha ? { sha: existing.sha } : {})
+          })
+        });
+        return;
+      } catch (error) {
+        if (!this.isShaConflict(error) || attempt === this.writeConflictRetries) {
+          throw error;
+        }
+        await this.wait(350 * (attempt + 1));
+      }
+    }
   }
 
   private async deleteFile(path: string, message: string): Promise<void> {
@@ -131,9 +152,29 @@ export class GitHubCmsService {
     });
     if (!response.ok) {
       const message = await response.text().catch(() => '');
-      throw new Error(message || `GitHub request failed: ${response.status}`);
+      throw new GitHubCmsRequestError(this.parseErrorMessage(message, response.status), response.status, message);
     }
     return response.json();
+  }
+
+  private isShaConflict(error: unknown): boolean {
+    return error instanceof GitHubCmsRequestError
+      && error.status === 409
+      && (error.body.includes('expected') || error.body.includes('sha'));
+  }
+
+  private parseErrorMessage(body: string, status: number): string {
+    if (!body) return `GitHub request failed: ${status}`;
+    try {
+      const parsed = JSON.parse(body) as { message?: string };
+      return parsed.message || `GitHub request failed: ${status}`;
+    } catch {
+      return body;
+    }
+  }
+
+  private wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private recordAsset(asset: MediaAsset): MediaAsset {

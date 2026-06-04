@@ -4,6 +4,7 @@ import { GitHubCmsService } from './github-cms.service';
 import { organizationAgeInfo } from '../utils/organization-age';
 
 type EditablePublishState = 'pending' | 'published' | 'failed';
+type EditableSection = 'team' | 'events' | 'projects' | 'galleryCollections' | 'siteContent';
 
 interface EditableDataSnapshot {
   team: TeamMember[];
@@ -25,6 +26,7 @@ export class ContentService {
   private readonly editableResetKey = 'ssai-editable-content-reset-version';
   private readonly editableStorageKey = 'ssai-editable-content';
   private readonly publishedCacheGraceMs = 30 * 60 * 1000;
+  private readonly dirtySections = new Set<EditableSection>();
   private publishQueue = Promise.resolve();
   readonly version = signal(0);
   readonly saveMessage = signal('');
@@ -390,17 +392,17 @@ export class ContentService {
 
   addTeamMember(member: TeamMember): void {
     this.team = [...this.team, member];
-    this.markSaved();
+    this.markSaved('team');
   }
 
   updateTeamMember(index: number, member: TeamMember): void {
     this.team = this.team.map((item, itemIndex) => itemIndex === index ? member : item);
-    this.markSaved();
+    this.markSaved('team');
   }
 
   deleteTeamMember(index: number): void {
     this.team = this.team.filter((_, itemIndex) => itemIndex !== index);
-    this.markSaved();
+    this.markSaved('team');
   }
 
   toggleOfficerStatus(index: number): void {
@@ -409,68 +411,68 @@ export class ContentService {
       type: 'officer',
       isCurrent: !(member.isCurrent ?? true)
     } : member);
-    this.markSaved();
+    this.markSaved('team');
   }
 
   addEvent(event: EventItem): void {
     const id = this.nextId(this.events);
     this.events = [...this.events, this.normalizeEvent({ ...event, id })];
-    this.markSaved();
+    this.markSaved('events');
   }
 
   updateEvent(id: number, event: EventItem): void {
     this.events = this.events.map((item) => item.id === id ? this.normalizeEvent({ ...event, id }) : item);
-    this.markSaved();
+    this.markSaved('events');
   }
 
   updateEventPage(id: number, page: NonNullable<EventItem['page']>): void {
     this.events = this.events.map((event) => event.id === id ? { ...event, page } : event);
-    this.markSaved();
+    this.markSaved('events');
   }
 
   deleteEvent(id: number): void {
     this.events = this.events.filter((item) => item.id !== id);
-    this.markSaved();
+    this.markSaved('events');
   }
 
   addProject(project: ProjectItem): void {
     this.projects = [...this.projects, { ...project, id: this.nextId(this.projects) }];
-    this.markSaved();
+    this.markSaved('projects');
   }
 
   updateProject(id: number, project: ProjectItem): void {
     this.projects = this.projects.map((item) => item.id === id ? { ...project, id } : item);
-    this.markSaved();
+    this.markSaved('projects');
   }
 
   deleteProject(id: number): void {
     this.projects = this.projects.filter((item) => item.id !== id);
-    this.markSaved();
+    this.markSaved('projects');
   }
 
   addGallery(collection: GalleryCollection): void {
     this.galleryCollections = [...this.galleryCollections, { ...collection, id: this.nextId(this.galleryCollections), photos: collection.photos ?? [] }];
-    this.markSaved();
+    this.markSaved('galleryCollections');
   }
 
   updateGallery(id: number, collection: GalleryCollection): void {
     this.galleryCollections = this.galleryCollections.map((item) => item.id === id ? { ...collection, id } : item);
-    this.markSaved();
+    this.markSaved('galleryCollections');
   }
 
   deleteGallery(id: number): void {
     this.galleryCollections = this.galleryCollections.filter((item) => item.id !== id);
-    this.markSaved();
+    this.markSaved('galleryCollections');
   }
 
   addGalleryPhotos(id: number, photos: GalleryPhoto[]): void {
     this.galleryCollections = this.galleryCollections.map((item) => item.id === id ? { ...item, photos: [...item.photos, ...photos] } : item);
-    this.markSaved();
+    this.markSaved('galleryCollections');
   }
 
   deleteGalleryPhoto(id: number, index: number): void {
     this.galleryCollections = this.galleryCollections.map((item) => item.id === id ? { ...item, photos: item.photos.filter((_, photoIndex) => photoIndex !== index) } : item);
-    this.markSaved();
+    this.markSaved('galleryCollections');
   }
 
   moveGalleryPhoto(id: number, index: number, direction: number): void {
@@ -482,7 +484,7 @@ export class ContentService {
       [photos[index], photos[nextIndex]] = [photos[nextIndex], photos[index]];
       return { ...item, photos };
     });
-    this.markSaved();
+    this.markSaved('galleryCollections');
   }
 
   exportJson(filename: string, data: unknown): void {
@@ -693,7 +695,8 @@ export class ContentService {
     return value.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
   }
 
-  private markSaved(): void {
+  private markSaved(sections: EditableSection | EditableSection[]): void {
+    (Array.isArray(sections) ? sections : [sections]).forEach((section) => this.dirtySections.add(section));
     this.saveMessage.set('Saving changes to the public CMS...');
     this.version.update((value) => value + 1);
     this.publishQueue = this.publishQueue
@@ -703,25 +706,20 @@ export class ContentService {
 
   updateSiteContent(next: SiteContent): void {
     this.siteContent = this.mergeSiteContent(next);
-    this.markSaved();
+    this.markSaved('siteContent');
   }
 
   updateHero(key: 'eventsHero' | 'pastEventsHero' | 'projectsHero' | 'leadershipHero', value: SiteContent[typeof key]): void {
     this.siteContent = { ...this.siteContent, [key]: value };
-    this.markSaved();
+    this.markSaved('siteContent');
   }
 
   private async persistEditableData(): Promise<void> {
     const data = this.currentEditableData();
+    const sections = this.consumeDirtySections();
     this.writeStoredEditableData(data, 'pending');
     try {
-      await Promise.all([
-        this.github.saveJson('public/assets/data/leadership.json', this.team),
-        this.github.saveJson('public/assets/data/events.json', this.events),
-        this.github.saveJson('public/assets/data/projects.json', this.projects),
-        this.github.saveJson('public/assets/data/gallery.json', this.galleryCollections),
-        this.github.saveJson('public/assets/data/site-content.json', this.siteContent)
-      ]);
+      await Promise.all(this.publishTasks(sections));
       this.writeStoredEditableData(data, 'published');
       this.saveMessage.set('Changes published. Refresh another device to see the update.');
     } catch (error) {
@@ -729,6 +727,23 @@ export class ContentService {
       this.writeStoredEditableData(data, 'failed');
       this.saveMessage.set(`Saved only on this browser. Public CMS publish failed: ${this.errorMessage(error)}`);
     }
+  }
+
+  private consumeDirtySections(): Set<EditableSection> {
+    const sections = new Set(this.dirtySections);
+    this.dirtySections.clear();
+    if (sections.size) return sections;
+    return new Set<EditableSection>(['team', 'events', 'projects', 'galleryCollections', 'siteContent']);
+  }
+
+  private publishTasks(sections: Set<EditableSection>): Array<Promise<void>> {
+    const tasks: Array<Promise<void>> = [];
+    if (sections.has('team')) tasks.push(this.github.saveJson('public/assets/data/leadership.json', this.team));
+    if (sections.has('events')) tasks.push(this.github.saveJson('public/assets/data/events.json', this.events));
+    if (sections.has('projects')) tasks.push(this.github.saveJson('public/assets/data/projects.json', this.projects));
+    if (sections.has('galleryCollections')) tasks.push(this.github.saveJson('public/assets/data/gallery.json', this.galleryCollections));
+    if (sections.has('siteContent')) tasks.push(this.github.saveJson('public/assets/data/site-content.json', this.siteContent));
+    return tasks;
   }
 
   private currentEditableData(): EditableDataSnapshot {
@@ -775,6 +790,12 @@ export class ContentService {
   }
 
   private errorMessage(error: unknown): string {
-    return error instanceof Error && error.message ? error.message : 'check GitHub CMS/Vercel token settings.';
+    if (!(error instanceof Error) || !error.message) {
+      return 'check GitHub CMS/Vercel token settings.';
+    }
+    if (error.message.includes('expected') && error.message.includes('but expected')) {
+      return 'GitHub had a newer copy of the file. Your change is saved in this browser; edit/save once more to publish it.';
+    }
+    return error.message;
   }
 }
