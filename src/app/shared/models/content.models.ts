@@ -44,6 +44,7 @@ export interface ProjectItem {
   github: string;
   demo: string;
   image?: string;
+  videoUrl?: string;
 }
 
 export interface TeamMember {

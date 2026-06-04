@@ -72,6 +72,16 @@ import { EventItem } from '../../shared/models/content.models';
             <span>Choose banner image from computer</span>
             <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" (change)="uploadBanner($event)">
           </label>
+          <mat-form-field appearance="outline"><mat-label>Event Video Title</mat-label><input matInput formControlName="videoTitle"></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Event Video URL</mat-label><input matInput formControlName="videoUrl"></mat-form-field>
+          <label class="upload-box">
+            <mat-icon>movie</mat-icon>
+            <span>Choose event video from computer</span>
+            <input type="file" accept="video/mp4,video/webm,video/ogg,video/quicktime" (change)="uploadEventVideo($event)">
+          </label>
+          @if (uploadMessage()) {
+            <strong class="upload-message">{{ uploadMessage() }}</strong>
+          }
           <mat-form-field appearance="outline"><mat-label>Speakers (comma separated)</mat-label><input matInput formControlName="speakers"></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Highlights (comma separated)</mat-label><input matInput formControlName="highlights"></mat-form-field>
           <div class="editor-actions">
@@ -112,6 +122,7 @@ export class EventsComponent {
   readonly editorOpen = signal(false);
   readonly heroEditorOpen = signal(false);
   readonly editingId = signal<number | null>(null);
+  readonly uploadMessage = signal('');
   readonly heroForm = this.fb.nonNullable.group({
     eyebrow: ['', Validators.required],
     title: ['', Validators.required],
@@ -130,6 +141,8 @@ export class EventsComponent {
     registrationLink: [''],
     organizingTeam: [''],
     image: ['linear-gradient(135deg, #45f0d1, #2563eb)'],
+    videoTitle: [''],
+    videoUrl: [''],
     speakers: [''],
     highlights: ['']
   });
@@ -143,6 +156,7 @@ export class EventsComponent {
   openAdd(): void {
     if (!this.officer.requireActiveSession()) return;
     this.editingId.set(null);
+    this.uploadMessage.set('');
     this.form.reset({ category: 'Workshop', status: 'Upcoming', eventType: 'Workshop', image: 'linear-gradient(135deg, #45f0d1, #2563eb)' });
     this.editorOpen.set(true);
   }
@@ -165,6 +179,7 @@ export class EventsComponent {
   openEdit(event: EventItem): void {
     if (!this.officer.requireActiveSession()) return;
     this.editingId.set(event.id);
+    const firstVideo = event.page?.videos?.[0];
     this.form.setValue({
       title: event.title,
       tagline: event.tagline ?? '',
@@ -178,9 +193,12 @@ export class EventsComponent {
       registrationLink: event.registrationLink ?? '',
       organizingTeam: event.organizingTeam ?? '',
       image: event.image,
+      videoTitle: firstVideo?.title ?? '',
+      videoUrl: firstVideo?.url ?? '',
       speakers: event.speakers?.join(', ') ?? '',
       highlights: event.highlights?.join(', ') ?? ''
     });
+    this.uploadMessage.set('');
     this.editorOpen.set(true);
   }
 
@@ -191,9 +209,17 @@ export class EventsComponent {
     }
     const value = this.form.getRawValue();
     const id = this.editingId();
+    const previousEvent = id === null ? undefined : this.content.events.find((item) => item.id === id);
+    const page = previousEvent?.page ? { ...previousEvent.page, videos: [...(previousEvent.page.videos ?? [])] } : undefined;
+    if (value.videoUrl) {
+      const video = { title: value.videoTitle || value.title, url: value.videoUrl };
+      if (page) {
+        page.videos = page.videos.length ? [video, ...page.videos.slice(1)] : [video];
+      }
+    }
     const event: EventItem = {
       id: id ?? 0,
-      slug: id === null ? undefined : this.content.events.find((item) => item.id === id)?.slug,
+      slug: id === null ? undefined : previousEvent?.slug,
       title: value.title,
       tagline: value.tagline,
       category: value.category,
@@ -208,7 +234,15 @@ export class EventsComponent {
       image: value.image || 'linear-gradient(135deg, #45f0d1, #2563eb)',
       speakers: this.csv(value.speakers),
       highlights: this.csv(value.highlights),
-      page: id === null ? undefined : this.content.events.find((item) => item.id === id)?.page
+      page: page ?? (value.videoUrl ? {
+        about: value.description,
+        highlights: [],
+        speakers: [],
+        gallery: [],
+        sponsors: [],
+        videos: [{ title: value.videoTitle || value.title, url: value.videoUrl }],
+        customSections: []
+      } : undefined)
     };
     if (id === null) {
       this.content.addEvent(event);
@@ -228,8 +262,34 @@ export class EventsComponent {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
-    this.form.controls.image.setValue((await this.github.uploadImage(file, 'events')).url);
-    input.value = '';
+    this.uploadMessage.set(`Uploading ${file.name} to GitHub CMS...`);
+    try {
+      this.form.controls.image.setValue((await this.github.uploadImage(file, 'events')).url);
+      this.uploadMessage.set(`${file.name} uploaded to GitHub CMS.`);
+    } catch (error) {
+      console.error('Event banner upload failed', error);
+      this.uploadMessage.set('Upload failed. Check GitHub CMS settings and try a smaller file.');
+    } finally {
+      input.value = '';
+    }
+  }
+
+  async uploadEventVideo(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploadMessage.set(`Uploading ${file.name} to GitHub CMS...`);
+    try {
+      const asset = await this.github.uploadMedia(file, 'events');
+      this.form.controls.videoTitle.setValue(this.form.controls.videoTitle.value || file.name.replace(/\.[^.]+$/, ''));
+      this.form.controls.videoUrl.setValue(asset.url);
+      this.uploadMessage.set(`${file.name} uploaded to GitHub CMS.`);
+    } catch (error) {
+      console.error('Event video upload failed', error);
+      this.uploadMessage.set('Upload failed. Check GitHub CMS settings and try a smaller file.');
+    } finally {
+      input.value = '';
+    }
   }
 
   private csv(value: string): string[] {

@@ -131,6 +131,32 @@ input {
   margin: 0;
 }
 
+.upload-box {
+  display: grid;
+  min-height: 5rem;
+  place-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 0.9rem;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+}
+
+.upload-box input {
+  display: none;
+}
+
+.upload-message {
+  color: var(--primary);
+}
+
+.project-video {
+  width: 100%;
+  margin-top: 1rem;
+  border-radius: 0.9rem;
+  background: #000;
+}
+
 .editor-actions {
   display: flex;
   gap: 0.7rem;

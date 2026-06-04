@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ContentService } from '../../core/services/content.service';
+import { GitHubCmsService } from '../../core/services/github-cms.service';
 import { OfficerSessionService } from '../../core/services/officer-session.service';
 import { ProjectCardComponent } from '../../shared/components/project-card/project-card.component';
 import { ProjectItem } from '../../shared/models/content.models';
@@ -64,7 +65,21 @@ import { ProjectItem } from '../../shared/models/content.models';
           <mat-form-field appearance="outline"><mat-label>Contributors (comma separated)</mat-label><input matInput formControlName="contributors"></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>GitHub Link</mat-label><input matInput formControlName="github"></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>Demo Link</mat-label><input matInput formControlName="demo"></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Image</mat-label><input matInput formControlName="image"></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Image URL</mat-label><input matInput formControlName="image"></mat-form-field>
+          <label class="upload-box">
+            <mat-icon>add_photo_alternate</mat-icon>
+            <span>Choose project photo from computer</span>
+            <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" (change)="uploadProjectMedia($event, 'image')">
+          </label>
+          <mat-form-field appearance="outline"><mat-label>Video URL</mat-label><input matInput formControlName="videoUrl"></mat-form-field>
+          <label class="upload-box">
+            <mat-icon>movie</mat-icon>
+            <span>Choose project video from computer</span>
+            <input type="file" accept="video/mp4,video/webm,video/ogg,video/quicktime" (change)="uploadProjectMedia($event, 'videoUrl')">
+          </label>
+          @if (uploadMessage()) {
+            <strong class="upload-message">{{ uploadMessage() }}</strong>
+          }
           <div class="editor-actions">
             <button class="ghost-btn" type="button" (click)="editorOpen.set(false)">Cancel</button>
             <button class="primary-btn" type="submit">Save</button>
@@ -86,6 +101,9 @@ import { ProjectItem } from '../../shared/models/content.models';
             <a class="ghost-btn" [href]="project.github">GitHub</a>
             <a class="primary-btn" [href]="project.demo">Demo</a>
           </div>
+          @if (project.videoUrl) {
+            <video class="project-video" [src]="project.videoUrl" controls></video>
+          }
         </article>
       </div>
     }
@@ -110,10 +128,12 @@ import { ProjectItem } from '../../shared/models/content.models';
 export class ProjectsComponent {
   private readonly fb = new FormBuilder();
   readonly content = inject(ContentService);
+  readonly github = inject(GitHubCmsService);
   readonly officer = inject(OfficerSessionService);
   readonly query = signal('');
   readonly selected = signal<ProjectItem['category'] | 'All'>('All');
   readonly activeProject = signal<ProjectItem | null>(null);
+  readonly uploadMessage = signal('');
   readonly categories: Array<ProjectItem['category'] | 'All'> = ['All', 'Healthcare AI', 'Drug Discovery', 'RAG Systems', 'NLP', 'Computer Vision', 'AI Agents', 'Robotics'];
   readonly categoriesForForm: ProjectItem['category'][] = ['Healthcare AI', 'Drug Discovery', 'RAG Systems', 'NLP', 'Computer Vision', 'AI Agents', 'Robotics'];
   readonly editorOpen = signal(false);
@@ -132,7 +152,8 @@ export class ProjectsComponent {
     contributors: [''],
     github: [''],
     demo: [''],
-    image: ['']
+    image: [''],
+    videoUrl: ['']
   });
   readonly filteredProjects = computed(() => {
     this.content.version();
@@ -148,6 +169,7 @@ export class ProjectsComponent {
   openAdd(): void {
     if (!this.officer.requireActiveSession()) return;
     this.editingId.set(null);
+    this.uploadMessage.set('');
     this.form.reset({ category: 'Healthcare AI' });
     this.editorOpen.set(true);
   }
@@ -178,8 +200,10 @@ export class ProjectsComponent {
       contributors: project.contributors.join(', '),
       github: project.github,
       demo: project.demo,
-      image: project.image ?? ''
+      image: project.image ?? '',
+      videoUrl: project.videoUrl ?? ''
     });
+    this.uploadMessage.set('');
     this.editorOpen.set(true);
   }
 
@@ -200,7 +224,8 @@ export class ProjectsComponent {
       contributors: this.csv(value.contributors),
       github: value.github,
       demo: value.demo,
-      image: value.image
+      image: value.image,
+      videoUrl: value.videoUrl
     };
     const id = this.editingId();
     if (id === null) {
@@ -214,6 +239,23 @@ export class ProjectsComponent {
   deleteProject(id: number): void {
     if (this.officer.requireActiveSession()) {
       this.content.deleteProject(id);
+    }
+  }
+
+  async uploadProjectMedia(event: Event, control: 'image' | 'videoUrl'): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploadMessage.set(`Uploading ${file.name} to GitHub CMS...`);
+    try {
+      const asset = await this.github.uploadMedia(file, 'projects');
+      this.form.controls[control].setValue(asset.url);
+      this.uploadMessage.set(`${file.name} uploaded to GitHub CMS.`);
+    } catch (error) {
+      console.error('Project media upload failed', error);
+      this.uploadMessage.set('Upload failed. Check GitHub CMS settings and try a smaller file.');
+    } finally {
+      input.value = '';
     }
   }
 

@@ -37,7 +37,15 @@ export class GitHubCmsService {
   }
 
   async uploadImage(file: File, category: MediaCategory, metadata: Pick<MediaAsset, 'galleryId'> = {}): Promise<MediaAsset> {
-    const uploadFile = await this.prepareImageForUpload(file);
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Only image files can be uploaded to this field.');
+    }
+
+    return this.uploadMedia(file, category, metadata);
+  }
+
+  async uploadMedia(file: File, category: MediaCategory, metadata: Pick<MediaAsset, 'galleryId'> = {}): Promise<MediaAsset> {
+    const uploadFile = file.type.startsWith('image/') ? await this.prepareImageForUpload(file) : file;
     if (!this.isConfigured()) {
       throw new Error('GitHub CMS is not configured. Save GitHub CMS settings first.');
     }

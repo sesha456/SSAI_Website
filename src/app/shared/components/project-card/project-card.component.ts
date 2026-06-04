@@ -8,7 +8,9 @@ import { ProjectItem } from '../../models/content.models';
   imports: [MatIconModule],
   template: `
     <article class="project glass">
-      @if (project().image) {
+      @if (project().videoUrl) {
+        <video class="project__video" [src]="project().videoUrl" muted playsinline controls></video>
+      } @else if (project().image) {
         <div class="project__image" [style.background]="imageBackground(project().image!)"></div>
       }
       <span class="pill">{{ project().category }}</span>

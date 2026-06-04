@@ -12,11 +12,18 @@
   border-color: color-mix(in srgb, var(--accent), transparent 35%);
 }
 
-.project__image {
+.project__image,
+.project__video {
   min-height: 10rem;
   margin: -1.1rem -1.1rem 1rem;
   border-radius: 1rem 1rem 0 0;
   background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.project__video {
+  width: calc(100% + 2.2rem);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
 }
 
 h3 {

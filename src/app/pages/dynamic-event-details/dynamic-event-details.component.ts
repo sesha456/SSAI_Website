@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { ContentService } from '../../core/services/content.service';
+import { GitHubCmsService } from '../../core/services/github-cms.service';
 import { OfficerSessionService } from '../../core/services/officer-session.service';
 import { CustomEventSection, EventItem, EventPageContent } from '../../shared/models/content.models';
 
@@ -183,6 +184,11 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
               <mat-form-field appearance="outline"><mat-label>Event Title</mat-label><input matInput formControlName="title"></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Tagline</mat-label><input matInput formControlName="tagline"></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Banner Image or Gradient</mat-label><input matInput formControlName="image"></mat-form-field>
+              <label class="upload-box">
+                <mat-icon>add_photo_alternate</mat-icon>
+                <span>Choose hero banner from computer</span>
+                <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" (change)="uploadBuilderMedia($event, heroForm.controls.image, 'image')">
+              </label>
               <mat-form-field appearance="outline"><mat-label>Date</mat-label><input matInput type="date" formControlName="date"></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Time</mat-label><input matInput formControlName="time"></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Venue</mat-label><input matInput formControlName="venue"></mat-form-field>
@@ -213,6 +219,11 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
                 <mat-form-field appearance="outline"><mat-label>Organization</mat-label><input matInput formControlName="organization"></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Biography</mat-label><textarea matInput rows="3" formControlName="bio"></textarea></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Profile Photo URL or Initials</mat-label><input matInput formControlName="image"></mat-form-field>
+                <label class="upload-box">
+                  <mat-icon>person_add</mat-icon>
+                  <span>Choose speaker photo from computer</span>
+                  <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" (change)="uploadBuilderMedia($event, speakerForm.controls.image, 'image')">
+                </label>
                 <mat-form-field appearance="outline"><mat-label>LinkedIn URL</mat-label><input matInput formControlName="linkedin"></mat-form-field>
                 <button class="primary-btn" type="submit">Save Speaker</button>
               </form>
@@ -222,6 +233,11 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
                 <mat-form-field appearance="outline"><mat-label>Title</mat-label><input matInput formControlName="title"></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Category</mat-label><input matInput formControlName="category"></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Image URL</mat-label><input matInput formControlName="image"></mat-form-field>
+                <label class="upload-box">
+                  <mat-icon>add_photo_alternate</mat-icon>
+                  <span>Choose gallery photo from computer</span>
+                  <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" (change)="uploadBuilderMedia($event, galleryForm.controls.image, 'image')">
+                </label>
                 <button class="primary-btn" type="submit">Save Image</button>
               </form>
 
@@ -229,6 +245,11 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
                 <h3>{{ sponsorIndex() === null ? 'Add Sponsor' : 'Edit Sponsor' }}</h3>
                 <mat-form-field appearance="outline"><mat-label>Sponsor Name</mat-label><input matInput formControlName="name"></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Logo URL</mat-label><input matInput formControlName="logo"></mat-form-field>
+                <label class="upload-box">
+                  <mat-icon>image</mat-icon>
+                  <span>Choose sponsor logo from computer</span>
+                  <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml" (change)="uploadBuilderMedia($event, sponsorForm.controls.logo, 'image')">
+                </label>
                 <mat-form-field appearance="outline"><mat-label>Website</mat-label><input matInput formControlName="website"></mat-form-field>
                 <button class="primary-btn" type="submit">Save Sponsor</button>
               </form>
@@ -237,6 +258,11 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
                 <h3>{{ videoIndex() === null ? 'Add Video' : 'Edit Video' }}</h3>
                 <mat-form-field appearance="outline"><mat-label>Video Title</mat-label><input matInput formControlName="title"></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>YouTube or MP4 URL</mat-label><input matInput formControlName="url"></mat-form-field>
+                <label class="upload-box">
+                  <mat-icon>movie</mat-icon>
+                  <span>Choose event video from computer</span>
+                  <input type="file" accept="video/mp4,video/webm,video/ogg,video/quicktime" (change)="uploadBuilderMedia($event, videoForm.controls.url, 'video')">
+                </label>
                 <button class="primary-btn" type="submit">Save Video</button>
               </form>
 
@@ -246,9 +272,17 @@ import { CustomEventSection, EventItem, EventPageContent } from '../../shared/mo
                 <mat-form-field appearance="outline"><mat-label>Layout</mat-label><mat-select formControlName="layout"><mat-option value="Text">Rich Text + Images</mat-option><mat-option value="Cards">Cards</mat-option></mat-select></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Content</mat-label><textarea matInput rows="5" formControlName="content"></textarea></mat-form-field>
                 <mat-form-field appearance="outline"><mat-label>Image URL</mat-label><input matInput formControlName="image"></mat-form-field>
+                <label class="upload-box">
+                  <mat-icon>add_photo_alternate</mat-icon>
+                  <span>Choose section image from computer</span>
+                  <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/gif" (change)="uploadBuilderMedia($event, customForm.controls.image, 'image')">
+                </label>
                 <button class="primary-btn" type="submit">Save Section</button>
               </form>
             </div>
+            @if (uploadMessage()) {
+              <strong class="upload-message">{{ uploadMessage() }}</strong>
+            }
 
             <div class="editor-block">
               <h3>Manage Existing Sections</h3>
@@ -286,8 +320,10 @@ export class DynamicEventDetailsComponent {
   private readonly fb = new FormBuilder();
   private readonly sanitizer = inject(DomSanitizer);
   readonly content = inject(ContentService);
+  readonly github = inject(GitHubCmsService);
   readonly officer = inject(OfficerSessionService);
   readonly builderOpen = signal(false);
+  readonly uploadMessage = signal('');
   readonly highlightIndex = signal<number | null>(null);
   readonly speakerIndex = signal<number | null>(null);
   readonly galleryIndex = signal<number | null>(null);
@@ -398,6 +434,26 @@ export class DynamicEventDetailsComponent {
     this.customIndex.set(null);
     this.customForm.reset({ layout: 'Text' });
     this.content.updateEventPage(event.id, page);
+  }
+
+  async uploadBuilderMedia(event: Event, control: { setValue(value: string): void }, kind: 'image' | 'video'): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploadMessage.set(`Uploading ${file.name} to GitHub CMS...`);
+    try {
+      const asset = kind === 'image' ? await this.github.uploadImage(file, 'events') : await this.github.uploadMedia(file, 'events');
+      control.setValue(asset.url);
+      if (kind === 'video' && !this.videoForm.controls.title.value) {
+        this.videoForm.controls.title.setValue(file.name.replace(/\.[^.]+$/, ''));
+      }
+      this.uploadMessage.set(`${file.name} uploaded to GitHub CMS.`);
+    } catch (error) {
+      console.error('Event builder media upload failed', error);
+      this.uploadMessage.set('Upload failed. Check GitHub CMS settings and try a smaller file.');
+    } finally {
+      input.value = '';
+    }
   }
 
   sectionItems(event: EventItem): Array<{ type: keyof EventPageContent; index: number; label: string; key: string }> {

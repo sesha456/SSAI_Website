@@ -120,6 +120,10 @@
   display: none;
 }
 
+.upload-message {
+  color: var(--primary);
+}
+
 .editor-actions {
   display: flex;
   gap: 0.7rem;
