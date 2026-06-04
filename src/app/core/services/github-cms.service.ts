@@ -6,14 +6,12 @@ export interface GitHubCmsSettings {
   owner: string;
   repo: string;
   branch: string;
-  token: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class GitHubCmsService {
   private readonly mediaResetVersion = '2026-06-01-server-cms-reset';
   private readonly mediaResetKey = 'ssai-media-library-reset-version';
-  private readonly settingsKey = 'ssai-github-cms-settings';
   private readonly mediaKey = 'ssai-media-library';
 
   readonly settings = signal<GitHubCmsSettings>(this.readSettings());
@@ -23,17 +21,6 @@ export class GitHubCmsService {
   isConfigured(): boolean {
     const settings = this.settings();
     return !!settings.owner && !!settings.repo && !!settings.branch;
-  }
-
-  saveSettings(settings: GitHubCmsSettings): void {
-    this.settings.set({
-      owner: settings.owner.trim(),
-      repo: settings.repo.trim(),
-      branch: settings.branch.trim() || 'main',
-      token: settings.token.trim()
-    });
-    localStorage.setItem(this.settingsKey, JSON.stringify(this.settings()));
-    this.status.set('GitHub CMS settings saved.');
   }
 
   async uploadImage(file: File, category: MediaCategory, metadata: Pick<MediaAsset, 'galleryId'> = {}): Promise<MediaAsset> {
@@ -136,34 +123,17 @@ export class GitHubCmsService {
   }
 
   private async request(path: string, init: RequestInit): Promise<unknown> {
-    const { owner, repo, branch, token } = this.settings();
-    const response = token
-      ? await this.githubRequest(path, init)
-      : await fetch(environment.githubCms.apiPath, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ owner, repo, branch, path, init })
-      });
+    const { owner, repo, branch } = this.settings();
+    const response = await fetch(environment.githubCms.apiPath, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ owner, repo, branch, path, init })
+    });
     if (!response.ok) {
       const message = await response.text().catch(() => '');
       throw new Error(message || `GitHub request failed: ${response.status}`);
     }
     return response.json();
-  }
-
-  private githubRequest(path: string, init: RequestInit): Promise<Response> {
-    const { owner, repo, branch, token } = this.settings();
-    const separator = path.includes('?') ? '&' : '?';
-    return fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}${separator}ref=${encodeURIComponent(branch)}`, {
-      ...init,
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        ...(init.headers ?? {})
-      }
-    });
   }
 
   private recordAsset(asset: MediaAsset): MediaAsset {
@@ -173,11 +143,12 @@ export class GitHubCmsService {
   }
 
   private readSettings(): GitHubCmsSettings {
-    try {
-      return { owner: environment.githubCms.owner, repo: environment.githubCms.repo, branch: environment.githubCms.branch, token: '', ...JSON.parse(localStorage.getItem(this.settingsKey) || '{}') };
-    } catch {
-      return { owner: environment.githubCms.owner, repo: environment.githubCms.repo, branch: environment.githubCms.branch, token: '' };
-    }
+    localStorage.removeItem('ssai-github-cms-settings');
+    return {
+      owner: environment.githubCms.owner,
+      repo: environment.githubCms.repo,
+      branch: environment.githubCms.branch || 'main'
+    };
   }
 
   private readMedia(): MediaAsset[] {

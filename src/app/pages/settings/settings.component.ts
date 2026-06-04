@@ -34,12 +34,6 @@ import { SiteSettings, ThemeId, ThemeService } from '../../core/services/theme.s
             <mat-form-field appearance="outline"><mat-label>Active Theme Pool (comma separated)</mat-label><input matInput formControlName="activeThemePool"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Carousel Speed (ms)</mat-label><input matInput type="number" formControlName="carouselSpeed"></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Homepage / Event Announcements JSON</mat-label><textarea matInput rows="8" formControlName="announcements"></textarea></mat-form-field>
-            <h2>GitHub CMS Storage</h2>
-            <p class="hint">This static site writes directly to GitHub from the officer browser. Configure this once per device to make edits permanent and visible everywhere.</p>
-            <mat-form-field appearance="outline"><mat-label>GitHub Owner</mat-label><input matInput formControlName="githubOwner"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Repository Name</mat-label><input matInput formControlName="githubRepo"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Branch</mat-label><input matInput formControlName="githubBranch"></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Fine-grained GitHub Token</mat-label><input matInput type="password" formControlName="githubToken"></mat-form-field>
             <button class="primary-btn" type="submit">Save Settings</button>
             @if (github.status()) {
               <strong>{{ github.status() }}</strong>
@@ -75,17 +69,12 @@ export class SettingsComponent {
   readonly officer = inject(OfficerSessionService);
   readonly themes: ThemeId[] = ['ai-neon', 'cyberpunk-city', 'deep-space-ai', 'research-lab', 'data-network-world', 'agentic-ai', 'healthcare-ai', 'unt-academic', 'unt-cse'];
   readonly current = this.themeService.settings();
-  readonly githubCurrent = this.github.settings();
   readonly form = this.fb.nonNullable.group({
     themeRotation: [this.current.themeRotation],
     fixedTheme: [this.current.fixedTheme],
     activeThemePool: [this.current.activeThemePool.join(', ')],
     carouselSpeed: [this.current.carouselSpeed],
-    announcements: [JSON.stringify(this.current.announcements, null, 2)],
-    githubOwner: [this.githubCurrent.owner || 'sesha456'],
-    githubRepo: [this.githubCurrent.repo || 'SSAI_Website'],
-    githubBranch: [this.githubCurrent.branch || 'main'],
-    githubToken: [this.githubCurrent.token]
+    announcements: [JSON.stringify(this.current.announcements, null, 2)]
   });
 
   save(): void {
@@ -98,12 +87,6 @@ export class SettingsComponent {
       announcements: JSON.parse(value.announcements || '[]') as SiteSettings['announcements']
     };
     this.themeService.updateSettings(settings);
-    this.github.saveSettings({
-      owner: value.githubOwner,
-      repo: value.githubRepo,
-      branch: value.githubBranch,
-      token: value.githubToken
-    });
   }
 
   clearCmsData(): void {
