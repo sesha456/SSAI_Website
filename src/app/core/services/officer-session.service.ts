@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { EmailService } from './email.service';
+import { GitHubCmsService } from './github-cms.service';
 
 export type OfficerRole = 'Super Admin' | 'President' | 'Vice President' | 'Event Coordinator' | 'Technical Lead' | 'Research Lead' | 'Marketing Lead' | 'Secretary' | 'Treasurer';
 
@@ -39,9 +40,14 @@ interface OfficerSheetRow {
 export class OfficerSessionService {
   private readonly router = inject(Router);
   private readonly email = inject(EmailService);
+  private readonly github = inject(GitHubCmsService);
   private readonly storageKey = 'officerSession';
   private readonly otpKey = 'officerPendingOtp';
   private readonly registryKey = 'ssai-officer-registry';
+  private readonly registryPath = 'public/assets/data/officers.json';
+  private readonly registryUrl = '/assets/data/officers.json';
+  private publishQueue = Promise.resolve();
+  private registryLoadedFromCms = false;
   private readonly warningShown = signal(false);
   private readonly defaultRegistry: OfficerRegistryEntry[] = [
     {
@@ -74,12 +80,13 @@ export class OfficerSessionService {
 
   constructor() {
     this.restoreSession();
+    void this.loadOfficerRegistry();
     setInterval(() => this.tick(), 1000);
     setInterval(() => this.validateSession(true), 30000);
   }
 
   async sendOtp(email: string, resend = false): Promise<{ ok: true; message: string } | { ok: false; message: string }> {
-    const officer = await this.findOfficerFromExcel(email);
+    const officer = await this.findOfficerForLogin(email);
     if (!officer) {
       return { ok: false, message: 'This email is not registered as an active SSAI officer.' };
     }
@@ -114,7 +121,7 @@ export class OfficerSessionService {
   }
 
   async verifyOtp(email: string, otp: string): Promise<{ ok: true; session: OfficerSession } | { ok: false; message: string }> {
-    const officer = await this.findOfficerFromExcel(email);
+    const officer = await this.findOfficerForLogin(email);
     const pending = this.readPendingOtp();
     if (!officer || !pending || pending.email !== officer.email.toLowerCase()) {
       return { ok: false, message: 'Please request a new verification code.' };
@@ -203,6 +210,13 @@ export class OfficerSessionService {
     return this.officers().find((officer) => officer.active && officer.email.toLowerCase() === normalizedEmail) ?? null;
   }
 
+  private async findOfficerForLogin(email: string): Promise<OfficerRegistryEntry | null> {
+    await this.loadOfficerRegistry();
+    const officer = this.findOfficer(email);
+    if (officer) return officer;
+    return this.registryLoadedFromCms ? null : this.findOfficerFromExcel(email);
+  }
+
   private async findOfficerFromExcel(email: string): Promise<OfficerRegistryEntry | null> {
     const normalizedEmail = email.trim().toLowerCase();
     const rows = await this.readOfficerSheet();
@@ -253,6 +267,55 @@ export class OfficerSessionService {
 
   private saveRegistry(): void {
     localStorage.setItem(this.registryKey, JSON.stringify(this.officers()));
+    this.message.set('Saving officer registry to the public CMS...');
+    this.publishQueue = this.publishQueue
+      .then(() => this.github.saveJson(this.registryPath, this.officers()))
+      .then(() => this.message.set('Officer registry published. Other devices can use the updated access list.'))
+      .catch((error) => {
+        console.error('Officer registry publish failed', error);
+        this.message.set(`Officer registry saved only on this browser. Public CMS publish failed: ${this.errorMessage(error)}`);
+      });
+  }
+
+  private async loadOfficerRegistry(): Promise<void> {
+    const registry = await this.fetchOfficerRegistry();
+    if (registry) {
+      const normalized = registry.length ? registry.map((entry) => ({
+        ...entry,
+        name: entry.name.trim(),
+        email: entry.email.trim(),
+        role: this.normalizeRole(entry.role),
+        active: entry.active !== false
+      })) : this.defaultRegistry;
+      this.officers.set(normalized);
+      localStorage.setItem(this.registryKey, JSON.stringify(normalized));
+      this.registryLoadedFromCms = true;
+    }
+  }
+
+  private async fetchOfficerRegistry(): Promise<OfficerRegistryEntry[] | null> {
+    try {
+      const response = await fetch(this.liveRegistryUrl(), { cache: 'no-store' });
+      if (response.ok) return await response.json() as OfficerRegistryEntry[];
+      const fallback = await fetch(this.registryUrl, { cache: 'no-store' });
+      return fallback.ok ? await fallback.json() as OfficerRegistryEntry[] : null;
+    } catch {
+      try {
+        const fallback = await fetch(this.registryUrl, { cache: 'no-store' });
+        return fallback.ok ? await fallback.json() as OfficerRegistryEntry[] : null;
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  private liveRegistryUrl(): string {
+    const { owner, repo, branch } = this.github.settings();
+    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${this.registryPath}?t=${Date.now()}`;
+  }
+
+  private errorMessage(error: unknown): string {
+    return error instanceof Error && error.message ? error.message : 'check GitHub CMS/Vercel token settings.';
   }
 
   private restoreSession(): void {

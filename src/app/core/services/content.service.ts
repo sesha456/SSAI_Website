@@ -9,6 +9,7 @@ export class ContentService {
   private readonly editableResetVersion = '2026-06-01-server-cms-reset';
   private readonly editableResetKey = 'ssai-editable-content-reset-version';
   private readonly editableStorageKey = 'ssai-editable-content';
+  private publishQueue = Promise.resolve();
   readonly version = signal(0);
   readonly saveMessage = signal('');
   readonly linkedInUrl = 'https://www.linkedin.com/company/society-for-student-ai-innovation/?viewAsMember=true';
@@ -161,6 +162,30 @@ export class ContentService {
       registrationLink: 'mailto:events@ssai.org?subject=Register%20for%20Industry%20AI%20Mixer',
       page: {
         about: 'A networking evening for students to meet AI engineers, founders, researchers, and recruiters from applied AI teams.',
+        highlights: [],
+        speakers: [],
+        gallery: [],
+        sponsors: [],
+        videos: [],
+        customSections: []
+      }
+    },
+    {
+      id: 5,
+      slug: 'gen-ai-hackathon',
+      title: 'Gen AI Hackathon',
+      tagline: 'Generative AI prototype sprint',
+      category: 'Competition',
+      status: 'Upcoming',
+      eventType: 'Hackathon',
+      date: '2026-07-09',
+      time: '1:00pm to 4:00pm',
+      venue: 'Gateway Center',
+      description: 'Hello',
+      image: 'linear-gradient(135deg, #45f0d1, #2563eb)',
+      registrationLink: 'mailto:events@ssai.org?subject=Register%20for%20Gen%20AI%20Hackathon',
+      page: {
+        about: 'Hello',
         highlights: [],
         speakers: [],
         gallery: [],
@@ -344,7 +369,6 @@ export class ContentService {
   ];
 
   constructor() {
-    this.loadStoredEditableData();
     void this.loadEditableData();
   }
 
@@ -470,23 +494,30 @@ export class ContentService {
       this.fetchJson<SiteContent>('/assets/data/site-content.json')
     ]);
 
+    let loadedLiveData = false;
     if (team) {
       this.team = team.map((member) => this.normalizeTeamMember(member));
+      loadedLiveData = true;
     }
     if (events) {
-      const fetchedEvents = events.map((event) => this.normalizeEvent(event));
-      const fetchedIds = new Set(fetchedEvents.map((event) => event.id));
-      const localEvents = this.events.filter((event) => !fetchedIds.has(event.id)).map((event) => this.normalizeEvent(event));
-      this.events = [...fetchedEvents, ...localEvents];
+      this.events = events.map((event) => this.normalizeEvent(event));
+      loadedLiveData = true;
     }
     if (projects) {
       this.projects = projects;
+      loadedLiveData = true;
     }
     if (galleries) {
       this.galleryCollections = galleries;
+      loadedLiveData = true;
     }
     if (siteContent) {
       this.siteContent = this.mergeSiteContent(siteContent);
+      loadedLiveData = true;
+    }
+    if (!loadedLiveData) {
+      this.loadStoredEditableData();
+      this.saveMessage.set('Using this browser backup because live CMS data could not be loaded.');
     }
     this.version.update((value) => value + 1);
   }
@@ -619,9 +650,11 @@ export class ContentService {
   }
 
   private markSaved(): void {
-    this.saveMessage.set('Changes Saved Successfully');
-    this.persistEditableData();
+    this.saveMessage.set('Saving changes to the public CMS...');
     this.version.update((value) => value + 1);
+    this.publishQueue = this.publishQueue
+      .then(() => this.persistEditableData())
+      .catch(() => undefined);
   }
 
   updateSiteContent(next: SiteContent): void {
@@ -634,7 +667,7 @@ export class ContentService {
     this.markSaved();
   }
 
-  private persistEditableData(): void {
+  private async persistEditableData(): Promise<void> {
     const data = {
       team: this.team,
       events: this.events,
@@ -643,11 +676,19 @@ export class ContentService {
       siteContent: this.siteContent
     };
     localStorage.setItem(this.editableStorageKey, JSON.stringify(data));
-    void this.github.saveJson('public/assets/data/leadership.json', this.team).catch(() => undefined);
-    void this.github.saveJson('public/assets/data/events.json', this.events).catch(() => undefined);
-    void this.github.saveJson('public/assets/data/projects.json', this.projects).catch(() => undefined);
-    void this.github.saveJson('public/assets/data/gallery.json', this.galleryCollections).catch(() => undefined);
-    void this.github.saveJson('public/assets/data/site-content.json', this.siteContent).catch(() => undefined);
+    try {
+      await Promise.all([
+        this.github.saveJson('public/assets/data/leadership.json', this.team),
+        this.github.saveJson('public/assets/data/events.json', this.events),
+        this.github.saveJson('public/assets/data/projects.json', this.projects),
+        this.github.saveJson('public/assets/data/gallery.json', this.galleryCollections),
+        this.github.saveJson('public/assets/data/site-content.json', this.siteContent)
+      ]);
+      this.saveMessage.set('Changes published. Refresh another device to see the update.');
+    } catch (error) {
+      console.error('CMS publish failed', error);
+      this.saveMessage.set(`Saved only on this browser. Public CMS publish failed: ${this.errorMessage(error)}`);
+    }
   }
 
   private mergeSiteContent(value: Partial<SiteContent>): SiteContent {
@@ -663,5 +704,9 @@ export class ContentService {
       leadershipHero: { ...this.siteContent.leadershipHero, ...value.leadershipHero },
       aboutCards: value.aboutCards ?? this.siteContent.aboutCards
     };
+  }
+
+  private errorMessage(error: unknown): string {
+    return error instanceof Error && error.message ? error.message : 'check GitHub CMS/Vercel token settings.';
   }
 }

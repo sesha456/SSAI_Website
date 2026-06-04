@@ -74,7 +74,7 @@ export class GitHubCmsService {
   async saveJson(path: string, data: unknown): Promise<void> {
     if (!this.isConfigured()) {
       this.status.set('GitHub CMS is not configured. Changes are saved only in this browser until Settings are configured.');
-      return;
+      throw new Error('GitHub CMS storage is not configured.');
     }
     const content = this.textToBase64(JSON.stringify(data, null, 2));
     await this.putFile(path, content, `Update ${path}`);

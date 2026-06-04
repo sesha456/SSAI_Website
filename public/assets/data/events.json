@@ -1,22 +1,133 @@
 [
   {
     "id": 1,
+    "slug": "applied-ai-research-night",
     "title": "Applied AI Research Night",
+    "tagline": "Student research lightning talks",
     "category": "Research",
+    "status": "Upcoming",
+    "eventType": "Research Showcase",
     "date": "2026-06-12",
     "time": "5:30 PM",
     "venue": "Innovation Hall Auditorium",
     "description": "Lightning talks from student research teams working on healthcare AI, RAG systems, and multi-agent workflows.",
-    "image": "linear-gradient(135deg, #45f0d1, #2563eb)"
+    "image": "linear-gradient(135deg, #45f0d1, #2563eb)",
+    "registrationLink": "mailto:events@ssai.org?subject=Register%20for%20Applied%20AI%20Research%20Night",
+    "page": {
+      "about": "Student research teams share concise demos, lessons learned, and next-step collaboration opportunities across healthcare AI, RAG systems, and multi-agent workflows.",
+      "highlights": [
+        {
+          "icon": "science",
+          "title": "Research Lightning Talks",
+          "description": "Fast-moving student presentations from active SSAI project teams."
+        },
+        {
+          "icon": "groups",
+          "title": "Research Networking",
+          "description": "Connect with peers looking for collaborators and mentors."
+        }
+      ],
+      "speakers": [],
+      "gallery": [],
+      "sponsors": [],
+      "videos": [],
+      "customSections": []
+    }
   },
   {
     "id": 2,
+    "slug": "generative-ai-build-workshop",
     "title": "Generative AI Build Workshop",
+    "tagline": "Hands-on applied AI practice",
     "category": "Workshop",
+    "status": "Upcoming",
+    "eventType": "Workshop",
     "date": "2026-06-20",
     "time": "2:00 PM",
     "venue": "AI Lab 204",
     "description": "Hands-on session covering prompt design, retrieval pipelines, evaluation, and responsible deployment.",
-    "image": "linear-gradient(135deg, #8b5cf6, #38bdf8)"
+    "image": "linear-gradient(135deg, #8b5cf6, #38bdf8)",
+    "registrationLink": "mailto:events@ssai.org?subject=Register%20for%20Generative%20AI%20Build%20Workshop",
+    "page": {
+      "about": "A practical workshop for building useful generative AI workflows, from prompt design through retrieval, evaluation, and deployment habits.",
+      "highlights": [],
+      "speakers": [],
+      "gallery": [],
+      "sponsors": [],
+      "videos": [],
+      "customSections": []
+    }
+  },
+  {
+    "id": 3,
+    "slug": "campus-ai-hackathon",
+    "title": "Campus AI Hackathon",
+    "tagline": "Prototype useful AI systems in one day",
+    "category": "Competition",
+    "status": "Upcoming",
+    "eventType": "Hackathon",
+    "date": "2026-07-11",
+    "time": "9:00 AM",
+    "venue": "Engineering Commons",
+    "description": "A full-day competition for prototypes that solve research, campus, and community challenges with AI.",
+    "image": "linear-gradient(135deg, #f8d36b, #ef476f)",
+    "registrationLink": "mailto:events@ssai.org?subject=Register%20for%20Campus%20AI%20Hackathon",
+    "page": {
+      "about": "A full-day build sprint for student teams creating AI prototypes for research, campus, and community challenges.",
+      "highlights": [],
+      "speakers": [],
+      "gallery": [],
+      "sponsors": [],
+      "videos": [],
+      "customSections": []
+    }
+  },
+  {
+    "id": 4,
+    "slug": "industry-ai-mixer",
+    "title": "Industry AI Mixer",
+    "tagline": "Meet builders, founders, and recruiters",
+    "category": "Networking",
+    "status": "Upcoming",
+    "eventType": "Networking Event",
+    "date": "2026-07-25",
+    "time": "6:00 PM",
+    "venue": "University Center",
+    "description": "Meet AI engineers, founders, graduate researchers, and recruiters from applied AI teams.",
+    "image": "linear-gradient(135deg, #14b8a6, #7c3aed)",
+    "registrationLink": "mailto:events@ssai.org?subject=Register%20for%20Industry%20AI%20Mixer",
+    "page": {
+      "about": "A networking evening for students to meet AI engineers, founders, researchers, and recruiters from applied AI teams.",
+      "highlights": [],
+      "speakers": [],
+      "gallery": [],
+      "sponsors": [],
+      "videos": [],
+      "customSections": []
+    }
+  },
+  {
+    "id": 5,
+    "slug": "gen-ai-hackathon",
+    "title": "Gen AI Hackathon",
+    "tagline": "Generative AI prototype sprint",
+    "category": "Competition",
+    "status": "Upcoming",
+    "eventType": "Hackathon",
+    "date": "2026-07-09",
+    "time": "1:00pm to 4:00pm",
+    "venue": "Gateway Center",
+    "description": "Hello",
+    "image": "linear-gradient(135deg, #45f0d1, #2563eb)",
+    "registrationLink": "mailto:events@ssai.org?subject=Register%20for%20Gen%20AI%20Hackathon",
+    "page": {
+      "about": "Hello",
+      "highlights": [],
+      "speakers": [],
+      "gallery": [],
+      "sponsors": [],
+      "videos": [],
+      "customSections": []
+    }
   }
 ]
