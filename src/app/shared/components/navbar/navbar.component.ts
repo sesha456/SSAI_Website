@@ -1,5 +1,5 @@
 import { Component, inject, output, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { IsActiveMatchOptions, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,7 +10,7 @@ import { OfficerSessionService } from '../../../core/services/officer-session.se
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, ReactiveFormsModule, MatIconModule, MatFormFieldModule, MatInputModule],
+  imports: [RouterLink, ReactiveFormsModule, MatIconModule, MatFormFieldModule, MatInputModule],
   template: `
     <button class="mobile-toggle glass" type="button" (click)="toggleMobile()" aria-label="Toggle menu">
       <mat-icon>{{ mobileOpen() ? 'close' : 'menu' }}</mat-icon>
@@ -25,7 +25,12 @@ import { OfficerSessionService } from '../../../core/services/officer-session.se
       <nav class="nav__links">
         @for (link of links; track link.path) {
           @if (!link.permission || canAccessLink(link.permission)) {
-            <a [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: link.path === '/' }" (click)="closeMobile()" [attr.aria-label]="link.label">
+            <a
+              [href]="link.path"
+              [class.active]="isActiveLink(link.path)"
+              (click)="navigateTo($event, link.path)"
+              [attr.aria-label]="link.label"
+            >
               <mat-icon>{{ link.icon }}</mat-icon>
               <span>{{ link.label }}</span>
             </a>
@@ -123,6 +128,7 @@ import { OfficerSessionService } from '../../../core/services/officer-session.se
 })
 export class NavbarComponent {
   private readonly fb = new FormBuilder();
+  private readonly router = inject(Router);
   readonly theme = inject(ThemeService);
   readonly officer = inject(OfficerSessionService);
   readonly collapsedChange = output<boolean>();
@@ -136,6 +142,18 @@ export class NavbarComponent {
     email: ['', [Validators.required, Validators.email]],
     otp: ['']
   });
+  private readonly exactActiveOptions: IsActiveMatchOptions = {
+    paths: 'exact',
+    queryParams: 'ignored',
+    fragment: 'ignored',
+    matrixParams: 'ignored'
+  };
+  private readonly sectionActiveOptions: IsActiveMatchOptions = {
+    paths: 'subset',
+    queryParams: 'ignored',
+    fragment: 'ignored',
+    matrixParams: 'ignored'
+  };
   readonly links = [
     { path: '/', label: 'Home', icon: 'home' },
     { path: '/about', label: 'About', icon: 'info' },
@@ -171,6 +189,16 @@ export class NavbarComponent {
 
   closeMobile(): void {
     this.mobileOpen.set(false);
+  }
+
+  navigateTo(event: MouseEvent, path: string): void {
+    event.preventDefault();
+    this.closeMobile();
+    void this.router.navigateByUrl(path);
+  }
+
+  isActiveLink(path: string): boolean {
+    return this.router.isActive(path, path === '/' ? this.exactActiveOptions : this.sectionActiveOptions);
   }
 
   canAccessLink(permission: 'leadership' | 'events' | 'projects' | 'galleries' | 'officers' | 'settings'): boolean {
