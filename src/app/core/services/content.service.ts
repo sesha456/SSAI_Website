@@ -3,12 +3,28 @@ import { EventItem, GalleryCollection, GalleryItem, GalleryPhoto, PastEvent, Pro
 import { GitHubCmsService } from './github-cms.service';
 import { organizationAgeInfo } from '../utils/organization-age';
 
+type EditablePublishState = 'pending' | 'published' | 'failed';
+
+interface EditableDataSnapshot {
+  team: TeamMember[];
+  events: EventItem[];
+  projects: ProjectItem[];
+  galleryCollections: GalleryCollection[];
+  siteContent: SiteContent;
+}
+
+interface EditableCache extends EditableDataSnapshot {
+  savedAt: number;
+  publishState: EditablePublishState;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ContentService {
   private readonly github = inject(GitHubCmsService);
   private readonly editableResetVersion = '2026-06-01-server-cms-reset';
   private readonly editableResetKey = 'ssai-editable-content-reset-version';
   private readonly editableStorageKey = 'ssai-editable-content';
+  private readonly publishedCacheGraceMs = 30 * 60 * 1000;
   private publishQueue = Promise.resolve();
   readonly version = signal(0);
   readonly saveMessage = signal('');
@@ -486,6 +502,7 @@ export class ContentService {
   }
 
   private async loadEditableData(): Promise<void> {
+    const localCache = this.readStoredEditableData();
     const [team, events, projects, galleries, siteContent] = await Promise.all([
       this.fetchJson<TeamMember[]>('/assets/data/leadership.json'),
       this.fetchJson<EventItem[]>('/assets/data/events.json'),
@@ -515,39 +532,66 @@ export class ContentService {
       this.siteContent = this.mergeSiteContent(siteContent);
       loadedLiveData = true;
     }
-    if (!loadedLiveData) {
-      this.loadStoredEditableData();
+    if (localCache && (!loadedLiveData || this.shouldPreferLocalCache(localCache))) {
+      this.applyEditableData(localCache);
       this.saveMessage.set('Using this browser backup because live CMS data could not be loaded.');
+      if (loadedLiveData) {
+        this.saveMessage.set(localCache.publishState === 'published'
+          ? 'Showing your latest browser copy while GitHub content catches up.'
+          : 'Showing your saved browser copy. Public CMS publish is still pending or failed.');
+      }
     }
     this.version.update((value) => value + 1);
   }
 
   private loadStoredEditableData(): boolean {
+    const stored = this.readStoredEditableData();
+    if (!stored) return false;
+    this.applyEditableData(stored);
+    this.version.update((value) => value + 1);
+    return true;
+  }
+
+  private readStoredEditableData(): EditableCache | null {
     try {
       if (localStorage.getItem(this.editableResetKey) !== this.editableResetVersion) {
         localStorage.removeItem(this.editableStorageKey);
         localStorage.setItem(this.editableResetKey, this.editableResetVersion);
-        return false;
+        return null;
       }
-      const stored = JSON.parse(localStorage.getItem(this.editableStorageKey) || 'null') as {
-        team?: TeamMember[];
-        events?: EventItem[];
-        projects?: ProjectItem[];
-        galleryCollections?: GalleryCollection[];
-        siteContent?: SiteContent;
-      } | null;
-      if (!stored) return false;
-      if (stored.team) this.team = stored.team.map((member) => this.normalizeTeamMember(member));
-      if (stored.events) this.events = stored.events.map((event) => this.normalizeEvent(event));
-      if (stored.projects) this.projects = stored.projects;
-      if (stored.galleryCollections) this.galleryCollections = stored.galleryCollections;
-      if (stored.siteContent) this.siteContent = this.mergeSiteContent(stored.siteContent);
-      this.version.update((value) => value + 1);
-      return true;
+      const stored = JSON.parse(localStorage.getItem(this.editableStorageKey) || 'null') as Partial<EditableCache> | null;
+      if (!stored) return null;
+      if (!stored.team && !stored.events && !stored.projects && !stored.galleryCollections && !stored.siteContent) return null;
+      return {
+        team: stored.team ?? this.team,
+        events: stored.events ?? this.events,
+        projects: stored.projects ?? this.projects,
+        galleryCollections: stored.galleryCollections ?? this.galleryCollections,
+        siteContent: stored.siteContent ? this.mergeSiteContent(stored.siteContent) : this.siteContent,
+        savedAt: stored.savedAt ?? 0,
+        publishState: stored.publishState ?? 'failed'
+      };
     } catch {
       localStorage.removeItem(this.editableStorageKey);
-      return false;
+      return null;
     }
+  }
+
+  private applyEditableData(stored: EditableDataSnapshot): void {
+    this.team = stored.team.map((member) => this.normalizeTeamMember(member));
+    this.events = stored.events.map((event) => this.normalizeEvent(event));
+    this.projects = stored.projects;
+    this.galleryCollections = stored.galleryCollections;
+    this.siteContent = this.mergeSiteContent(stored.siteContent);
+  }
+
+  private shouldPreferLocalCache(cache: EditableCache): boolean {
+    if (cache.publishState !== 'published') return true;
+    return Date.now() - cache.savedAt < this.publishedCacheGraceMs && this.hasLocalDifferences(cache);
+  }
+
+  private hasLocalDifferences(cache: EditableDataSnapshot): boolean {
+    return JSON.stringify(this.editableSnapshot(cache)) !== JSON.stringify(this.editableSnapshot(this.currentEditableData()));
   }
 
   private async fetchJson<T>(url: string): Promise<T | null> {
@@ -668,14 +712,8 @@ export class ContentService {
   }
 
   private async persistEditableData(): Promise<void> {
-    const data = {
-      team: this.team,
-      events: this.events,
-      projects: this.projects,
-      galleryCollections: this.galleryCollections,
-      siteContent: this.siteContent
-    };
-    localStorage.setItem(this.editableStorageKey, JSON.stringify(data));
+    const data = this.currentEditableData();
+    this.writeStoredEditableData(data, 'pending');
     try {
       await Promise.all([
         this.github.saveJson('public/assets/data/leadership.json', this.team),
@@ -684,11 +722,41 @@ export class ContentService {
         this.github.saveJson('public/assets/data/gallery.json', this.galleryCollections),
         this.github.saveJson('public/assets/data/site-content.json', this.siteContent)
       ]);
+      this.writeStoredEditableData(data, 'published');
       this.saveMessage.set('Changes published. Refresh another device to see the update.');
     } catch (error) {
       console.error('CMS publish failed', error);
+      this.writeStoredEditableData(data, 'failed');
       this.saveMessage.set(`Saved only on this browser. Public CMS publish failed: ${this.errorMessage(error)}`);
     }
+  }
+
+  private currentEditableData(): EditableDataSnapshot {
+    return {
+      team: this.team,
+      events: this.events,
+      projects: this.projects,
+      galleryCollections: this.galleryCollections,
+      siteContent: this.siteContent
+    };
+  }
+
+  private writeStoredEditableData(data: EditableDataSnapshot, publishState: EditablePublishState): void {
+    localStorage.setItem(this.editableStorageKey, JSON.stringify({
+      ...data,
+      savedAt: Date.now(),
+      publishState
+    } satisfies EditableCache));
+  }
+
+  private editableSnapshot(data: EditableDataSnapshot): EditableDataSnapshot {
+    return {
+      team: data.team,
+      events: data.events.map((event) => this.normalizeEvent(event)),
+      projects: data.projects,
+      galleryCollections: data.galleryCollections,
+      siteContent: this.mergeSiteContent(data.siteContent)
+    };
   }
 
   private mergeSiteContent(value: Partial<SiteContent>): SiteContent {
