@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Inject, Injectable, computed, signal } from '@angular/core';
 
-export type ThemeId = 'ai-neon' | 'cyberpunk-city' | 'deep-space-ai' | 'research-lab' | 'data-network-world' | 'agentic-ai' | 'healthcare-ai' | 'unt-academic' | 'modern-professional' | 'diwali' | 'holi' | 'christmas' | 'thanksgiving' | 'usa-independence' | 'india-independence';
+export type ThemeId = 'ai-neon' | 'cyberpunk-city' | 'deep-space-ai' | 'research-lab' | 'data-network-world' | 'agentic-ai' | 'healthcare-ai' | 'unt-academic' | 'unt-cse' | 'modern-professional' | 'diwali' | 'holi' | 'christmas' | 'thanksgiving' | 'usa-independence' | 'india-independence';
 
 export interface Celebration {
   id: string;
@@ -31,7 +31,7 @@ export class ThemeService {
   readonly settings = signal<SiteSettings>(this.readSettings());
   readonly activeCelebration = signal<Celebration | null>(null);
   readonly activeTheme = signal<ThemeId>('ai-neon');
-  readonly isLight = computed(() => this.activeTheme() === 'modern-professional' || this.activeTheme() === 'research-lab' || this.activeTheme() === 'unt-academic');
+  readonly isLight = computed(() => this.activeTheme() === 'modern-professional' || this.activeTheme() === 'research-lab' || this.activeTheme() === 'unt-academic' || this.activeTheme() === 'unt-cse');
 
   constructor(@Inject(DOCUMENT) private readonly document: Document) {
     this.initialize();
@@ -67,6 +67,13 @@ export class ThemeService {
     localStorage.setItem(this.settingsKey, JSON.stringify(settings));
     sessionStorage.removeItem(this.sessionThemeKey);
     void this.initialize();
+  }
+
+  applyOfficerTheme(theme: ThemeId): void {
+    sessionStorage.setItem(this.sessionThemeKey, theme);
+    localStorage.setItem(this.lastThemeKey, theme);
+    this.activeTheme.set(theme);
+    this.apply(theme);
   }
 
   private pickSessionTheme(): ThemeId {
@@ -188,7 +195,7 @@ export class ThemeService {
     };
     try {
       const stored = { ...defaults, ...JSON.parse(localStorage.getItem(this.settingsKey) || '{}') } as SiteSettings;
-      const validThemes = new Set<ThemeId>(['ai-neon', 'cyberpunk-city', 'deep-space-ai', 'research-lab', 'data-network-world', 'agentic-ai', 'healthcare-ai', 'unt-academic', 'modern-professional', 'diwali', 'holi', 'christmas', 'thanksgiving', 'usa-independence', 'india-independence']);
+      const validThemes = new Set<ThemeId>(['ai-neon', 'cyberpunk-city', 'deep-space-ai', 'research-lab', 'data-network-world', 'agentic-ai', 'healthcare-ai', 'unt-academic', 'unt-cse', 'modern-professional', 'diwali', 'holi', 'christmas', 'thanksgiving', 'usa-independence', 'india-independence']);
       stored.activeThemePool = stored.activeThemePool.filter((theme) => validThemes.has(theme));
       stored.fixedTheme = validThemes.has(stored.fixedTheme) ? stored.fixedTheme : 'ai-neon';
       return stored;

@@ -24,7 +24,7 @@ import { OfficerSessionService } from '../../../core/services/officer-session.se
 
       <nav class="nav__links">
         @for (link of links; track link.path) {
-          @if (!link.permission || officer.canManage(link.permission)) {
+          @if (!link.permission || canAccessLink(link.permission)) {
             <a [routerLink]="link.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: link.path === '/' }" (click)="closeMobile()" [attr.aria-label]="link.label">
               <mat-icon>{{ link.icon }}</mat-icon>
               <span>{{ link.label }}</span>
@@ -146,7 +146,7 @@ export class NavbarComponent {
     { path: '/gallery', label: 'Gallery', icon: 'photo_library' },
     { path: '/media-library', label: 'Media Library', icon: 'perm_media', permission: 'galleries' as const },
     { path: '/manage-officers', label: 'Manage Officers', icon: 'manage_accounts', permission: 'officers' as const },
-    { path: '/settings', label: 'Settings', icon: 'settings', permission: 'officers' as const },
+    { path: '/settings', label: 'Settings', icon: 'settings', permission: 'settings' as const },
     { path: '/join', label: 'Join', icon: 'person_add' },
     { path: '/contact', label: 'Contact', icon: 'mail' }
   ];
@@ -171,6 +171,10 @@ export class NavbarComponent {
 
   closeMobile(): void {
     this.mobileOpen.set(false);
+  }
+
+  canAccessLink(permission: 'leadership' | 'events' | 'projects' | 'galleries' | 'officers' | 'settings'): boolean {
+    return permission === 'settings' ? this.officer.isOfficer() : this.officer.canManage(permission);
   }
 
   closeVerification(): void {
