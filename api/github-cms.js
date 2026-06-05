@@ -6,9 +6,9 @@ export default async function handler(request, response) {
     return;
   }
 
-  const token = process.env.GITHUB_CMS_TOKEN;
+  const token = process.env.GITHUB_CMS_TOKEN || process.env.CMS_TOKEN || process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
   if (!token) {
-    response.status(500).send('GITHUB_CMS_TOKEN is not configured on Vercel.');
+    response.status(500).send('GitHub CMS token is not configured. Set GITHUB_CMS_TOKEN in Vercel environment variables.');
     return;
   }
 
@@ -19,8 +19,9 @@ export default async function handler(request, response) {
     return;
   }
 
-  const separator = String(path).includes('?') ? '&' : '?';
-  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}${separator}ref=${encodeURIComponent(branch)}`;
+  const encodedPath = encodeURIComponent(path).replace(/%2F/g, '/');
+  const refQuery = method === 'GET' ? `?ref=${encodeURIComponent(branch)}` : '';
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}${refQuery}`;
   const githubResponse = await fetch(url, {
     method,
     body: init?.body,
